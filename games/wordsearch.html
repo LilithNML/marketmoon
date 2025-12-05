@@ -1058,7 +1058,66 @@ backBtn.innerHTML = 'Volver';
 backBtn.style.cssText = 'position:absolute; left:10px; top:10px; color: white; text-decoration:none; background:rgba(255,255,255,0.1); padding:5px 10px; border-radius:5px; font-family:sans-serif; font-size:12px;';
 header.appendChild(backBtn);
 
+/* --- INTEGRACIÓN SEGURA V3 --- */
+// 1. Botón de Salida Flotante
+const exitBtn = document.createElement('a');
+exitBtn.href = '../index.html';
+exitBtn.innerHTML = '<i data-lucide="home"></i>';
+exitBtn.style.cssText = 'position:fixed; top:15px; left:15px; background:rgba(0,0,0,0.6); color:white; padding:10px; border-radius:50%; z-index:999; display:flex; border:1px solid rgba(255,255,255,0.2);';
+document.body.appendChild(exitBtn);
+if(window.lucide) lucide.createIcons();
 
+// 2. Interceptar victoria para evitar farming
+// Accedemos al prototipo de tu clase WordSearchGame
+if (typeof WordSearchGame !== 'undefined') {
+    const originalLevelComplete = WordSearchGame.prototype.levelComplete;
+    
+    WordSearchGame.prototype.levelComplete = function() {
+        // Ejecutar visuales originales
+        originalLevelComplete.call(this);
+        
+        // Lógica de pago único
+        // Usamos el índice del nivel actual como ID único
+        const currentLvlId = this.state.levelIndex; 
+        const REWARD = 50;
+
+        // Llamar al padre (GameCenter) o gestionar localmente
+        try {
+            // Verificar si tenemos acceso a la lógica central
+            const storeKey = 'gamecenter_v3_core'; // MISMA CLAVE QUE APP.JS
+            let store = JSON.parse(localStorage.getItem(storeKey) || '{"coins":0, "progress":{"wordsearch":[]}}');
+            
+            // Inicializar array si no existe
+            if(!store.progress) store.progress = {};
+            if(!store.progress.wordsearch) store.progress.wordsearch = [];
+
+            // ¿Ya se pagó este nivel?
+            if (!store.progress.wordsearch.includes(currentLvlId)) {
+                // NO se ha pagado: Pagar
+                store.progress.wordsearch.push(currentLvlId);
+                store.coins += REWARD;
+                localStorage.setItem(storeKey, JSON.stringify(store));
+                
+                // Feedback visual discreto
+                showToast(`¡Primera vez! +${REWARD} monedas`);
+            } else {
+                // YA se pagó
+                showToast("Nivel completado (Replay - Sin monedas)");
+            }
+        } catch(e) {
+            console.error("Error conectando con billetera", e);
+        }
+    };
+}
+
+function showToast(msg) {
+    const d = document.createElement('div');
+    d.textContent = msg;
+    d.style.cssText = 'position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#333; color:white; padding:10px 20px; border-radius:20px; z-index:2000; font-family:sans-serif; font-size:14px; box-shadow:0 5px 15px rgba(0,0,0,0.5);';
+    document.body.appendChild(d);
+    setTimeout(() => d.remove(), 3000);
+}
+        
     </script>
 </body>
 </html>
