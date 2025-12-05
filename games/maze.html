@@ -598,7 +598,48 @@ levelComplete = function() {
     }
 };
 
+/* --- INTEGRACIÓN SEGURA V3 (LABERINTO) --- */
+// 1. Botón Salir
+const exitBtn = document.createElement('a');
+exitBtn.href = '../index.html';
+exitBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>';
+exitBtn.style.cssText = 'position:fixed; top:15px; left:15px; color:#fff; background:rgba(0,0,0,0.5); padding:8px; border-radius:50%; z-index:100; backdrop-filter:blur(4px);';
+document.body.appendChild(exitBtn);
 
+// 2. Hook de victoria
+// Sobrescribimos la función levelComplete global de tu script de laberinto
+const originalMazeComplete = levelComplete; 
+levelComplete = function() {
+    originalMazeComplete(); // Visual original
+    
+    // Obtener nivel actual desde la variable 'state' de tu script
+    const currentLvl = state.level; 
+    const REWARD = 30;
+
+    try {
+        const storeKey = 'gamecenter_v3_core';
+        let store = JSON.parse(localStorage.getItem(storeKey) || '{"coins":0, "progress":{"maze":[]}}');
+        
+        if(!store.progress) store.progress = {};
+        if(!store.progress.maze) store.progress.maze = [];
+
+        // Chequeo anti-farm
+        if (!store.progress.maze.includes(currentLvl)) {
+            store.progress.maze.push(currentLvl);
+            store.coins += REWARD;
+            localStorage.setItem(storeKey, JSON.stringify(store));
+            
+            // Inyectar mensaje en el modal existente si es posible, o usar toast
+            const msgElement = document.getElementById('level-message');
+            if(msgElement) msgElement.innerHTML += `<br><span style="color:#fbbf24; font-size:0.9em">✨ Bono primera vez: +${REWARD}</span>`;
+        } else {
+            const msgElement = document.getElementById('level-message');
+            if(msgElement) msgElement.innerHTML += `<br><span style="color:#94a3b8; font-size:0.8em">↺ Replay (Sin monedas extra)</span>`;
+        }
+    } catch(e) {
+        console.error("Error saving progress", e);
+    }
+};
     </script>
 </body>
 </html>
