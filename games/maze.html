@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laberinto</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        canvas { background: #fff; display: block; margin: 0 auto; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); touch-action: none; }
+        .controls { text-align: center; margin-top: 1rem; }
+        .ctrl-btn { width: 50px; height: 50px; font-size: 1.5rem; margin: 5px; }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="../index.html" style="color:white; text-decoration:none;">⬅ Salir</a>
+        <span>Laberinto</span>
+        <span class="coin-balance">🪙 <span class="coin-balance-display">...</span></span>
+    </header>
+    <main>
+        <div class="text-center">
+            <p>Lleva el punto rojo (tú) al cuadrado verde (meta).</p>
+            <p id="timer">Tiempo: 0s</p>
+        </div>
+        <canvas id="mazeCanvas" width="300" height="300"></canvas>
+        
+        <div class="controls">
+            <div><button class="ctrl-btn" onclick="movePlayer(0, -1)">⬆️</button></div>
+            <div>
+                <button class="ctrl-btn" onclick="movePlayer(-1, 0)">⬅️</button>
+                <button class="ctrl-btn" onclick="movePlayer(0, 1)">⬇️</button>
+                <button class="ctrl-btn" onclick="movePlayer(1, 0)">➡️</button>
+            </div>
+        </div>
+    </main>
+    <script src="../js/app.js"></script>
+    <script src="../js/maze.js"></script>
+</body>
+</html>
