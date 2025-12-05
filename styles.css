@@ -1,163 +1,195 @@
 :root {
-    --bg-dark: #0f172a;
-    --glass-bg: rgba(30, 41, 59, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --primary: #ec4899; /* Rosa neón elegante */
-    --accent: #8b5cf6;  /* Violeta */
+    /* Paleta Premium Oscura (Ahorra batería en pantallas OLED) */
+    --bg-deep: #020617; 
+    --bg-card: #1e293b;
+    --primary: #f43f5e; /* Rosa sofisticado */
+    --accent: #6366f1;  /* Indigo */
     --gold: #fbbf24;
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
+    
+    /* Variables de UI */
     --radius: 16px;
-    --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --header-h: 70px;
 }
 
+/* Reset Optimizado */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
 body {
-    font-family: 'Inter', system-ui, sans-serif;
-    background: radial-gradient(circle at top left, #1e1b4b, var(--bg-dark));
+    background-color: var(--bg-deep);
+    /* Gradiente sutil estático (mejor rendimiento que animados) */
+    background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, var(--bg-deep) 70%);
     color: var(--text-main);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     margin: 0;
     min-height: 100vh;
+    padding-bottom: 20px;
     display: flex;
     flex-direction: column;
 }
 
-/* Header Premium */
+/* Header Flotante Limpio */
 .app-header {
-    background: rgba(15, 23, 42, 0.8);
-    backdrop-filter: blur(10px);
-    padding: 1rem 2rem;
+    height: var(--header-h);
+    padding: 0 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--glass-border);
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 50;
+    background: rgba(2, 6, 23, 0.85); /* Fondo sólido con ligera transparencia */
+    backdrop-filter: blur(8px); /* Blur solo aquí */
+    border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
 .brand {
-    font-size: 1.5rem;
     font-weight: 700;
-    background: linear-gradient(to right, var(--primary), var(--accent));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.wallet-badge {
-    background: rgba(251, 191, 36, 0.1);
-    border: 1px solid rgba(251, 191, 36, 0.3);
-    color: var(--gold);
-    padding: 0.5rem 1rem;
-    border-radius: 50px;
-    font-weight: 600;
+    font-size: 1.2rem;
+    letter-spacing: 0.5px;
     display: flex;
     align-items: center;
     gap: 8px;
-    transition: transform 0.2s;
+    color: var(--text-main);
 }
 
-/* Contenedores */
+.coin-badge {
+    background: rgba(251, 191, 36, 0.15);
+    color: var(--gold);
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Grid Layout Responsive */
 main {
-    max-width: 1200px;
+    max-width: 800px; /* Ancho controlado para lectura cómoda */
     margin: 0 auto;
-    padding: 2rem;
     width: 100%;
-    box-sizing: border-box;
+    padding: 20px;
 }
 
 h2 {
     font-weight: 300;
-    font-size: 2rem;
-    margin-bottom: 2rem;
-    border-bottom: 1px solid var(--glass-border);
-    padding-bottom: 1rem;
+    margin-bottom: 25px;
+    opacity: 0.9;
+    font-size: 1.5rem;
 }
 
-/* Grid de Cartas */
 .grid-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 2rem;
+    gap: 20px;
+    /* Grid automático inteligente */
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
-.glass-card {
-    background: var(--glass-bg);
-    backdrop-filter: blur(8px);
-    border: 1px solid var(--glass-border);
+/* Tarjetas Optimizadas (Sin sombras pesadas) */
+.game-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(255,255,255,0.05);
     border-radius: var(--radius);
-    padding: 1.5rem;
-    transition: transform 0.3s, box-shadow 0.3s;
+    padding: 0; /* Imagen full width */
     overflow: hidden;
-    position: relative;
     display: flex;
     flex-direction: column;
+    transition: transform 0.2s ease;
+    /* Optimización de renderizado */
+    will-change: transform; 
 }
 
-.glass-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 40px rgba(236, 72, 153, 0.15);
-    border-color: rgba(236, 72, 153, 0.3);
+.game-card:active {
+    transform: scale(0.98);
 }
 
-/* Elementos de la carta */
-.card-icon-header {
-    margin-bottom: 1rem;
-    color: var(--primary);
+.card-content {
+    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
 }
 
-.card-img-top {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-}
-
-.glass-card h3 { margin: 0 0 0.5rem 0; font-size: 1.25rem; }
-.glass-card p { color: var(--text-muted); font-size: 0.9rem; flex-grow: 1; margin-bottom: 1.5rem; }
-
-/* Botones Premium */
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary), var(--accent));
-    color: white;
-    border: none;
-    padding: 0.8rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity 0.2s;
-    text-decoration: none;
-    display: inline-flex;
+.card-img-wrapper {
+    height: 160px;
+    background: #0f172a;
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    width: 100%;
-    box-sizing: border-box;
+    position: relative;
 }
 
-.btn-primary:hover { opacity: 0.9; }
+/* Iconos grandes en lugar de imágenes pesadas si fallan */
+.card-icon-placeholder {
+    color: var(--primary);
+    opacity: 0.8;
+}
 
-.btn-secondary {
-    background: rgba(255,255,255,0.05);
-    color: var(--text-main);
-    border: 1px solid var(--glass-border);
-    padding: 0.8rem 1.5rem;
-    border-radius: 8px;
+h3 { margin: 0 0 8px 0; font-size: 1.1rem; }
+p { 
+    margin: 0 0 20px 0; 
+    color: var(--text-muted); 
+    font-size: 0.9rem; 
+    line-height: 1.5; 
+    flex-grow: 1; 
+}
+
+/* Botones Accesibles (Touch Friendly 44px+) */
+.btn {
+    border: none;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
     cursor: pointer;
+    width: 100%;
+    text-align: center;
     text-decoration: none;
     display: inline-flex;
+    justify-content: center;
     align-items: center;
     gap: 8px;
-    transition: background 0.2s;
+    transition: opacity 0.2s;
 }
-.btn-secondary:hover { background: rgba(255,255,255,0.1); }
 
-/* Responsive */
-@media (max-width: 600px) {
-    .app-header { padding: 1rem; }
-    main { padding: 1rem; }
-    h2 { font-size: 1.5rem; }
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 15px rgba(244, 63, 94, 0.3); /* Sombra estática suave */
+}
+
+.btn-gold {
+    background: var(--gold);
+    color: #3a2500;
+}
+
+.btn:hover { opacity: 0.9; }
+
+/* Mensaje de feedback al ganar */
+.toast-success {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #10b981;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 50px;
+    z-index: 1000;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    animation: fadeUp 0.3s ease;
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translate(-50%, 20px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* Reducción de movimiento para gama baja si el sistema lo pide */
+@media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
