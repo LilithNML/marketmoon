@@ -5,82 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tienda de Regalos</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-    <header>
-        <a href="index.html" style="color:white; text-decoration:none;">⬅ Volver</a>
-        <h1>Tienda</h1>
-        <span class="coin-balance">🪙 <span class="coin-balance-display">...</span></span>
+    <header class="app-header">
+        <div class="brand">
+            <a href="index.html" style="color:white; margin-right:15px;"><i data-lucide="arrow-left"></i></a>
+            Tienda
+        </div>
+        <div class="wallet-badge">
+            <i data-lucide="coins"></i> <span class="coin-display">...</span>
+        </div>
     </header>
 
     <main>
-        <div id="shop-container" class="grid-container">
-            <p>Cargando tienda...</p>
-        </div>
+        <h2>Recompensas Disponibles</h2>
+        <div id="shop-grid" class="grid-container">
+            </div>
     </main>
 
     <script src="js/app.js"></script>
     <script>
-        // Lógica específica de la tienda
         document.addEventListener('DOMContentLoaded', () => {
             fetch('data/shop.json')
-                .then(res => res.json())
-                .then(items => renderShop(items))
-                .catch(err => console.error("Error cargando tienda", err));
+                .then(r => r.json())
+                .then(items => {
+                    const container = document.getElementById('shop-grid');
+                    items.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'glass-card';
+                        div.innerHTML = `
+                            <img src="${item.image}" alt="${item.name}" class="card-img-top">
+                            <h3>${item.name}</h3>
+                            <p>${item.desc}</p>
+                            <button class="btn-primary" onclick="buyItem(${item.id}, ${item.price}, '${item.name}')">
+                                <span>${item.price}</span> <i data-lucide="coins" size="16"></i> Canjear
+                            </button>
+                        `;
+                        container.appendChild(div);
+                    });
+                    lucide.createIcons();
+                });
         });
 
-        function renderShop(items) {
-            const container = document.getElementById('shop-container');
-            container.innerHTML = '';
-            
-            items.forEach(item => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <div style="font-size: 3rem;">${item.image}</div>
-                    <h3>${item.name}</h3>
-                    <p>${item.description}</p>
-                    <p><strong>Precio: ${item.price}</strong></p>
-                    <button onclick="buyItem(${item.id}, '${item.name}', ${item.price})">Canjear</button>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function buyItem(id, name, price) {
-            if(!confirm(`¿Seguro que quieres gastar ${price} monedas en "${name}"?`)) return;
-
-            if(spendCoins(price)) {
-                // Registrar compra
-                currentState.inventory.push({
-                    itemId: id,
-                    name: name,
-                    date: new Date().toISOString()
-                });
-                saveState();
-                
-                // Generar Recibo
-                downloadReceipt(name, price);
-
-                // Notificar vía Mailto
-                // NOTA DE SEGURIDAD: EmailJS es mejor para ocultar emails, pero requiere backend/api keys.
-                // Mailto es seguro y simple para proyectos estáticos.
-                const subject = encodeURIComponent(`Canje de Regalo: ${name}`);
-                const body = encodeURIComponent(`Hola! He canjeado mis monedas por: ${name}.\n\nFecha: ${new Date().toLocaleString()}`);
-                window.location.href = `mailto:tu-email@ejemplo.com?subject=${subject}&body=${body}`;
-            } else {
-                alert("No tienes suficientes monedas :(");
+        function buyItem(id, price, name) {
+            if(confirm(`¿Canjear "${name}" por ${price} monedas?`)) {
+                if(GameCenter.spendCoins(price, name)) {
+                    alert(`¡Canje exitoso! Tómale captura a esto y envíamelo: \n\nVALE POR: ${name}\nFECHA: ${new Date().toLocaleString()}`);
+                } else {
+                    alert("No tienes suficientes monedas. ¡Juega más!");
+                }
             }
-        }
-
-        function downloadReceipt(itemName, cost) {
-            const receipt = `RECIBO DE CANJE\n----------------\nItem: ${itemName}\nCosto: ${cost}\nFecha: ${new Date().toLocaleString()}\n\n¡Gracias por jugar!`;
-            const blob = new Blob([receipt], {type: "text/plain"});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `recibo_${itemName.replace(/\s/g, '_')}.txt`;
-            a.click();
         }
     </script>
 </body>
