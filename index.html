@@ -2,58 +2,64 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Love Arcade | Inicio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Arcade del Destino</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
     <header class="app-header">
         <div class="brand">
-            <i data-lucide="heart-handshake"></i> Love Arcade
+            <i data-lucide="sparkles" color="#f43f5e"></i> LoveArcade
         </div>
-        <div class="wallet-badge">
-            <i data-lucide="coins"></i>
+        <div class="coin-badge">
+            <i data-lucide="coins" size="16"></i>
             <span class="coin-display">0</span>
         </div>
     </header>
 
     <main>
-        <h2>Selecciona un Destino</h2>
+        <h2>Tus Misiones</h2>
         
         <div class="grid-container">
-            <div class="glass-card">
-                <div class="card-icon-header">
-                    <i data-lucide="type" size="48"></i>
+            <article class="game-card">
+                <div class="card-img-wrapper">
+                    <i data-lucide="map" size="64" class="card-icon-placeholder" style="color:#00f3ff"></i>
                 </div>
-                <h3>Palabras del Destino</h3>
-                <p>Descubre los mensajes ocultos entre las estrellas.</p>
-                <a href="games/wordsearch.html" class="btn-primary">
-                    <i data-lucide="play"></i> Jugar Ahora
-                </a>
-            </div>
+                <div class="card-content">
+                    <h3>Laberinto Neón</h3>
+                    <p>Conecta los caminos iluminados para encontrar la salida.</p>
+                    <a href="games/maze.html" class="btn btn-primary">
+                        <i data-lucide="play-circle"></i> Jugar
+                    </a>
+                </div>
+            </article>
 
-            <div class="glass-card">
-                <div class="card-icon-header">
-                    <i data-lucide="map" size="48"></i>
+            <article class="game-card">
+                <div class="card-img-wrapper">
+                    <i data-lucide="type" size="64" class="card-icon-placeholder" style="color:#f43f5e"></i>
                 </div>
-                <h3>Laberinto Neón</h3>
-                <p>Encuentra el camino hacia el corazón iluminado.</p>
-                <a href="games/maze.html" class="btn-primary">
-                    <i data-lucide="play"></i> Jugar Ahora
-                </a>
-            </div>
+                <div class="card-content">
+                    <h3>Sopa de Letras</h3>
+                    <p>Encuentra las palabras ocultas del destino.</p>
+                    <a href="games/wordsearch.html" class="btn btn-primary">
+                        <i data-lucide="play-circle"></i> Jugar
+                    </a>
+                </div>
+            </article>
 
-            <div class="glass-card" style="border-color: var(--gold);">
-                <div class="card-icon-header" style="color: var(--gold);">
-                    <i data-lucide="gift" size="48"></i>
+            <article class="game-card" style="border-color: rgba(251, 191, 36, 0.3);">
+                <div class="card-img-wrapper">
+                    <i data-lucide="gift" size="64" class="card-icon-placeholder" style="color:var(--gold)"></i>
                 </div>
-                <h3>Tienda de Regalos</h3>
-                <p>Canjea tus puntos por experiencias reales.</p>
-                <a href="shop.html" class="btn-primary" style="background: var(--gold); color: #000;">
-                    <i data-lucide="shopping-bag"></i> Ir a Canjear
-                </a>
-            </div>
+                <div class="card-content">
+                    <h3>Recompensas</h3>
+                    <p>Canjea tus monedas por momentos especiales.</p>
+                    <a href="shop.html" class="btn btn-gold">
+                        <i data-lucide="shopping-bag"></i> Abrir Tienda
+                    </a>
+                </div>
+            </article>
         </div>
     </main>
 
