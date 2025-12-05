@@ -2,38 +2,603 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laberinto</title>
-    <link rel="stylesheet" href="../styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Hearts Maze - Enhanced</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;500;700&display=swap" rel="stylesheet">
+    
     <style>
-        canvas { background: #fff; display: block; margin: 0 auto; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); touch-action: none; }
-        .controls { text-align: center; margin-top: 1rem; }
-        .ctrl-btn { width: 50px; height: 50px; font-size: 1.5rem; margin: 5px; }
+        :root {
+            --bg-color: #050210;
+            --wall-color: #ff00de; /* Magenta Neón */
+            --player-color: #00f3ff; /* Cyan Neón */
+            --goal-color: #ffe600; /* Oro Neón */
+            --overlay-bg: rgba(15, 5, 24, 0.95);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: white;
+            font-family: 'Quicksand', sans-serif;
+            overflow: hidden;
+            touch-action: none; /* Crucial para los controles swipe */
+            user-select: none;
+        }
+
+        /* Efectos Neón */
+        .neon-text {
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px var(--wall-color), 0 0 30px var(--wall-color);
+        }
+        .neon-box {
+            box-shadow: 0 0 10px var(--player-color), inset 0 0 5px var(--player-color);
+            border: 1px solid var(--player-color);
+        }
+        .neon-btn {
+            background: transparent;
+            border: 2px solid var(--wall-color);
+            color: #fff;
+            text-shadow: 0 0 5px var(--wall-color);
+            box-shadow: 0 0 5px var(--wall-color);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .neon-btn:hover, .neon-btn:active {
+            background: var(--wall-color);
+            box-shadow: 0 0 20px var(--wall-color);
+            transform: scale(1.05);
+        }
+
+        /* Canvas */
+        #game-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 70vh; /* Más espacio para el juego al quitar botones */
+        }
+        canvas {
+            background: rgba(255, 255, 255, 0.02);
+            box-shadow: 0 0 20px rgba(255, 0, 222, 0.2);
+            border-radius: 8px;
+        }
+
+        /* Audio Controls */
+        #audio-control {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        #audio-control:active {
+            transform: scale(0.9);
+        }
+
+        /* Modales */
+        .modal {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--overlay-bg);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 50; text-align: center; padding: 20px;
+        }
+        .hidden { display: none !important; }
+        
+        .heart-beat { animation: beat 1.5s infinite; }
+        @keyframes beat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Indicador de Swipe (opcional, ayuda visual inicial) */
+        .swipe-hint {
+            animation: fadeOut 3s forwards 2s; /* Desaparece después de 5s */
+            pointer-events: none;
+        }
+        @keyframes fadeOut { to { opacity: 0; } }
+
     </style>
 </head>
-<body>
-    <header>
-        <a href="../index.html" style="color:white; text-decoration:none;">⬅ Salir</a>
-        <span>Laberinto</span>
-        <span class="coin-balance">🪙 <span class="coin-balance-display">...</span></span>
+<body class="h-screen w-screen flex flex-col justify-between items-center p-2">
+
+    <!-- Header con Audio Toggle -->
+    <header class="w-full flex justify-between items-center px-4 py-3 bg-opacity-20 bg-black rounded-lg z-10">
+        <div class="flex items-center gap-4">
+            <div class="text-xl font-bold text-pink-400">Nivel <span id="level-display" class="text-white">1</span>/10</div>
+            <!-- Botón de Audio -->
+            <button id="audio-control" class="text-cyan-400 hover:text-white" aria-label="Silenciar música">
+                <!-- Icono Volumen On -->
+                <svg id="icon-sound-on" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                <!-- Icono Volumen Off (Oculto por defecto) -->
+                <svg id="icon-sound-off" class="hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+            </button>
+        </div>
+        <h1 class="text-sm md:text-xl font-light tracking-widest text-blue-300 uppercase">Neon Hearts</h1>
     </header>
-    <main>
-        <div class="text-center">
-            <p>Lleva el punto rojo (tú) al cuadrado verde (meta).</p>
-            <p id="timer">Tiempo: 0s</p>
-        </div>
-        <canvas id="mazeCanvas" width="300" height="300"></canvas>
+
+    <!-- Game Area -->
+    <div id="game-container">
+        <canvas id="mazeCanvas"></canvas>
         
-        <div class="controls">
-            <div><button class="ctrl-btn" onclick="movePlayer(0, -1)">⬆️</button></div>
-            <div>
-                <button class="ctrl-btn" onclick="movePlayer(-1, 0)">⬅️</button>
-                <button class="ctrl-btn" onclick="movePlayer(0, 1)">⬇️</button>
-                <button class="ctrl-btn" onclick="movePlayer(1, 0)">➡️</button>
-            </div>
+        <!-- Pista visual para móvil -->
+        <div id="mobile-hint" class="swipe-hint absolute bottom-10 text-white text-opacity-50 text-sm md:hidden flex flex-col items-center">
+            <svg class="w-8 h-8 mb-1 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"></path></svg>
+            Arrastra para mover
         </div>
-    </main>
-    <script src="../js/app.js"></script>
-    <script src="../js/maze.js"></script>
+    </div>
+
+    <!-- Info footer (Solo PC) -->
+    <div class="w-full pb-4 text-center hidden md:block">
+        <p class="text-xs text-gray-500">Usa W A S D o Flechas para moverte</p>
+    </div>
+
+    <!-- SCREENS -->
+
+    <!-- 1. Start / Continue Screen -->
+    <div id="start-screen" class="modal">
+        <h1 class="text-5xl md:text-7xl font-bold mb-4 neon-text text-pink-500">NEON<br>HEARTS</h1>
+        <p class="text-blue-200 mb-8 max-w-md">Encuentra el camino. Sigue la luz.</p>
+        
+        <div id="continue-msg" class="hidden text-yellow-300 mb-4 font-bold text-lg">
+            ¡Progreso encontrado!
+        </div>
+
+        <button id="start-btn" class="neon-btn px-8 py-3 rounded-full text-xl font-bold tracking-widest uppercase mb-4">
+            Iniciar
+        </button>
+        <p class="text-xs text-gray-500 mt-4">Toca la pantalla para activar el audio</p>
+    </div>
+
+    <!-- 2. Level Complete -->
+    <div id="level-modal" class="modal hidden">
+        <div class="bg-black bg-opacity-80 p-8 rounded-2xl border border-pink-500 shadow-2xl max-w-sm w-full neon-box">
+            <svg class="w-16 h-16 mx-auto text-red-500 heart-beat mb-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+            </svg>
+            <h2 class="text-2xl font-bold text-white mb-2">¡Nivel <span id="modal-level-num">1</span> Completado!</h2>
+            <p id="level-message" class="text-lg text-cyan-300 italic mb-6">"..."</p>
+            <button id="next-level-btn" class="neon-btn px-6 py-2 rounded-full text-lg">
+                Siguiente Nivel
+            </button>
+        </div>
+    </div>
+
+    <!-- 3. Final Screen -->
+    <div id="end-screen" class="modal hidden">
+        <h1 class="text-4xl md:text-6xl font-bold mb-4 neon-text text-yellow-400">¡DESTINO ALCANZADO!</h1>
+        <p class="text-white text-xl mb-8 max-w-lg leading-relaxed px-4">
+            Has iluminado todos los caminos. Tu persistencia es la verdadera luz de este laberinto.
+        </p>
+        <div class="flex flex-col gap-4 w-full max-w-xs">
+            <button id="restart-btn" class="neon-btn px-8 py-3 rounded-full text-lg font-bold uppercase w-full">
+                Volver a Jugar
+            </button>
+            <button id="reset-save-btn" class="text-red-400 text-sm hover:text-red-300 underline mt-2">
+                Borrar progreso y salir
+            </button>
+        </div>
+    </div>
+
+    <!-- Elemento de Audio Oculto -->
+    <!-- NOTA: Reemplaza el 'src' con tu propio archivo MP3 si lo deseas. 
+         Usamos un link de ejemplo royalty-free para que funcione la demo. -->
+    <audio id="bg-music" loop preload="auto">
+        <source src="https://cdn.pixabay.com/download/audio/2022/03/24/audio_196726260a.mp3?filename=synthwave-80s-110045.mp3" type="audio/mp3">
+        Tu navegador no soporta audio.
+    </audio>
+
+    <script>
+        // --- CONSTANTES Y CONFIGURACIÓN ---
+        const MESSAGES = [
+            "Cada paso ilumina el destino.",
+            "No temas a los giros equivocados.",
+            "La paciencia es tu mejor guía.",
+            "Sigue brillando, falta poco.",
+            "Tu luz es más fuerte que el muro.",
+            "Mitad del viaje, corazón entero.",
+            "El camino difícil lleva a lugares hermosos.",
+            "Ya casi sientes el latido final.",
+            "Un último esfuerzo, valiente.",
+            "El amor siempre encuentra la salida."
+        ];
+
+        const LEVELS_CONFIG = [
+            { cols: 5, rows: 5 }, { cols: 7, rows: 7 }, 
+            { cols: 9, rows: 9 }, { cols: 11, rows: 11 },
+            { cols: 13, rows: 13 }, { cols: 15, rows: 15 }, 
+            { cols: 17, rows: 17 }, { cols: 19, rows: 19 },
+            { cols: 21, rows: 21 }, { cols: 25, rows: 25 }
+        ];
+
+        // --- ESTADO DEL JUEGO ---
+        let state = {
+            level: 0,
+            maze: [],
+            player: { x: 0, y: 0 },
+            goal: { x: 0, y: 0 },
+            isActive: false,
+            cellSize: 0,
+            isMuted: false
+        };
+
+        // Variables de Canvas
+        const canvas = document.getElementById('mazeCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Variables de Audio
+        const bgMusic = document.getElementById('bg-music');
+        bgMusic.volume = 0.4; // Volumen suave
+
+        // --- INICIALIZACIÓN ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProgress(); // Cargar nivel y estado de audio guardado
+            initAudioUI();
+            setupEventListeners();
+            
+            // Actualizar texto del botón Start si hay progreso
+            const btnText = document.getElementById('start-btn');
+            if (state.level > 0) {
+                btnText.textContent = `Continuar Nivel ${state.level + 1}`;
+                document.getElementById('continue-msg').classList.remove('hidden');
+            }
+        });
+
+        function setupEventListeners() {
+            // UI Buttons
+            document.getElementById('start-btn').addEventListener('click', () => {
+                attemptAudioPlay(); // Intentar reproducir audio al primer click de usuario
+                startGame();
+            });
+            document.getElementById('next-level-btn').addEventListener('click', nextLevel);
+            document.getElementById('restart-btn').addEventListener('click', restartGame);
+            document.getElementById('reset-save-btn').addEventListener('click', fullReset);
+            
+            // Audio Toggle
+            document.getElementById('audio-control').addEventListener('click', toggleMute);
+
+            // Teclado
+            window.addEventListener('keydown', handleKeyInput);
+            
+            // Resize
+            window.addEventListener('resize', () => {
+                if(state.isActive) drawGame();
+            });
+
+            // SWIPE / DRAG CONTROLS
+            setupSwipeControls();
+        }
+
+        // --- SISTEMA DE GUARDADO (LocalStorage) ---
+        function saveProgress() {
+            localStorage.setItem('neonMaze_level', state.level);
+            localStorage.setItem('neonMaze_muted', state.isMuted);
+        }
+
+        function loadProgress() {
+            // Cargar Nivel
+            const savedLevel = localStorage.getItem('neonMaze_level');
+            if (savedLevel !== null) {
+                state.level = parseInt(savedLevel, 10);
+                // Si ya terminó el juego, resetear al 0 o al último
+                if (state.level >= LEVELS_CONFIG.length) state.level = 0; 
+            }
+
+            // Cargar Audio
+            const savedMute = localStorage.getItem('neonMaze_muted');
+            if (savedMute !== null) {
+                state.isMuted = (savedMute === 'true');
+            }
+        }
+
+        function fullReset() {
+            localStorage.removeItem('neonMaze_level');
+            location.reload();
+        }
+
+        // --- AUDIO SYSTEM ---
+        function initAudioUI() {
+            updateMuteIcon();
+            bgMusic.muted = state.isMuted;
+        }
+
+        function toggleMute() {
+            state.isMuted = !state.isMuted;
+            bgMusic.muted = state.isMuted;
+            // Si des-silencia y no estaba sonando, intentar reproducir
+            if (!state.isMuted && bgMusic.paused) {
+                attemptAudioPlay();
+            }
+            updateMuteIcon();
+            saveProgress(); // Guardar preferencia
+        }
+
+        function updateMuteIcon() {
+            const onIcon = document.getElementById('icon-sound-on');
+            const offIcon = document.getElementById('icon-sound-off');
+            if (state.isMuted) {
+                onIcon.classList.add('hidden');
+                offIcon.classList.remove('hidden');
+            } else {
+                onIcon.classList.remove('hidden');
+                offIcon.classList.add('hidden');
+            }
+        }
+
+        function attemptAudioPlay() {
+            // Los navegadores bloquean autoplay hasta que hay interacción
+            if (!state.isMuted) {
+                bgMusic.play().catch(e => console.log("Esperando interacción para audio..."));
+            }
+        }
+
+        // --- LÓGICA DE JUEGO ---
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            loadLevelData();
+        }
+
+        function restartGame() {
+            document.getElementById('end-screen').classList.add('hidden');
+            state.level = 0;
+            saveProgress();
+            startGame();
+        }
+
+        function nextLevel() {
+            state.level++;
+            saveProgress();
+            loadLevelData();
+        }
+
+        function loadLevelData() {
+            if (state.level >= LEVELS_CONFIG.length) {
+                showEndScreen();
+                return;
+            }
+
+            // UI Update
+            document.getElementById('level-display').textContent = state.level + 1;
+            document.getElementById('level-modal').classList.add('hidden');
+
+            const config = LEVELS_CONFIG[state.level];
+            state.maze = generateMaze(config.cols, config.rows);
+            state.player = { x: 0, y: 0 };
+            state.goal = { x: config.cols - 1, y: config.rows - 1 };
+            state.isActive = true;
+
+            drawGame();
+        }
+
+        function showEndScreen() {
+            state.isActive = false;
+            document.getElementById('end-screen').classList.remove('hidden');
+        }
+
+        function levelComplete() {
+            state.isActive = false;
+            const msg = MESSAGES[state.level] || "¡Bien hecho!";
+            document.getElementById('modal-level-num').textContent = state.level + 1;
+            document.getElementById('level-message').textContent = `"${msg}"`;
+            document.getElementById('level-modal').classList.remove('hidden');
+        }
+
+        // --- CONTROLES SWIPE / DRAG ---
+        function setupSwipeControls() {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            const threshold = 30; // Sensibilidad (pixeles para detectar mov)
+
+            // Usamos el contenedor para capturar toques en toda el área de juego
+            const zone = document.getElementById('game-container');
+
+            zone.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+                // Intento de audio unlock en iOS
+                if(bgMusic.paused && !state.isMuted) attemptAudioPlay();
+            }, {passive: false});
+
+            zone.addEventListener('touchmove', (e) => {
+                if(!state.isActive) return;
+                e.preventDefault(); // Prevenir scroll
+
+                const touchCurrentX = e.changedTouches[0].screenX;
+                const touchCurrentY = e.changedTouches[0].screenY;
+
+                const diffX = touchCurrentX - touchStartX;
+                const diffY = touchCurrentY - touchStartY;
+
+                // Detectar movimiento si supera el umbral
+                if (Math.abs(diffX) > threshold || Math.abs(diffY) > threshold) {
+                    if (Math.abs(diffX) > Math.abs(diffY)) {
+                        // Movimiento horizontal
+                        move(diffX > 0 ? 1 : -1, 0);
+                    } else {
+                        // Movimiento vertical
+                        move(0, diffY > 0 ? 1 : -1);
+                    }
+                    
+                    // Resetear el punto de inicio al punto actual
+                    // Esto permite "arrastrar" continuamente para seguir moviéndose
+                    // sin tener que levantar el dedo.
+                    touchStartX = touchCurrentX;
+                    touchStartY = touchCurrentY;
+                }
+            }, {passive: false});
+        }
+
+        // --- MOVIMIENTO (CORE) ---
+        function move(dx, dy) {
+            if (!state.isActive) return;
+
+            const { x, y } = state.player;
+            const currentCell = state.maze[y][x];
+            let canMove = false;
+
+            if (dx === 0 && dy === -1 && !currentCell.walls.top) canMove = true;
+            if (dx === 1 && dy === 0 && !currentCell.walls.right) canMove = true;
+            if (dx === 0 && dy === 1 && !currentCell.walls.bottom) canMove = true;
+            if (dx === -1 && dy === 0 && !currentCell.walls.left) canMove = true;
+
+            if (canMove) {
+                state.player.x += dx;
+                state.player.y += dy;
+                drawGame();
+
+                if (state.player.x === state.goal.x && state.player.y === state.goal.y) {
+                    levelComplete();
+                }
+            }
+        }
+
+        function handleKeyInput(e) {
+            // Intento de audio unlock
+            if(bgMusic.paused && !state.isMuted) attemptAudioPlay();
+
+            switch(e.key) {
+                case 'ArrowUp': case 'w': case 'W': move(0, -1); break;
+                case 'ArrowRight': case 'd': case 'D': move(1, 0); break;
+                case 'ArrowDown': case 's': case 'S': move(0, 1); break;
+                case 'ArrowLeft': case 'a': case 'A': move(-1, 0); break;
+            }
+        }
+
+        // --- ALGORITMO DE LABERINTO (Recursive Backtracker) ---
+        function generateMaze(cols, rows) {
+            let grid = [];
+            for (let r = 0; r < rows; r++) {
+                let row = [];
+                for (let c = 0; c < cols; c++) {
+                    row.push({
+                        x: c, y: r,
+                        walls: { top: true, right: true, bottom: true, left: true },
+                        visited: false
+                    });
+                }
+                grid.push(row);
+            }
+
+            let stack = [];
+            let current = grid[0][0];
+            current.visited = true;
+
+            const getNeighbor = (cell) => {
+                let neighbors = [];
+                const { x, y } = cell;
+                if (y > 0 && !grid[y - 1][x].visited) neighbors.push({ dir: 'top', cell: grid[y - 1][x] });
+                if (x < cols - 1 && !grid[y][x + 1].visited) neighbors.push({ dir: 'right', cell: grid[y][x + 1] });
+                if (y < rows - 1 && !grid[y + 1][x].visited) neighbors.push({ dir: 'bottom', cell: grid[y + 1][x] });
+                if (x > 0 && !grid[y][x - 1].visited) neighbors.push({ dir: 'left', cell: grid[y][x - 1] });
+                
+                return neighbors.length > 0 
+                    ? neighbors[Math.floor(Math.random() * neighbors.length)] 
+                    : undefined;
+            };
+
+            do {
+                let next = getNeighbor(current);
+                if (next) {
+                    stack.push(current);
+                    if (next.dir === 'top') { current.walls.top = false; next.cell.walls.bottom = false; }
+                    else if (next.dir === 'right') { current.walls.right = false; next.cell.walls.left = false; }
+                    else if (next.dir === 'bottom') { current.walls.bottom = false; next.cell.walls.top = false; }
+                    else if (next.dir === 'left') { current.walls.left = false; next.cell.walls.right = false; }
+                    current = next.cell;
+                    current.visited = true;
+                } else if (stack.length > 0) {
+                    current = stack.pop();
+                }
+            } while (stack.length > 0);
+
+            return grid;
+        }
+
+        // --- RENDERIZADO ---
+        function drawGame() {
+            if (!state.maze.length) return;
+            const rows = state.maze.length;
+            const cols = state.maze[0].length;
+            const container = document.getElementById('game-container');
+            
+            // Layout dinámico
+            const maxWidth = container.clientWidth - 20; 
+            const maxHeight = container.clientHeight - 20;
+            state.cellSize = Math.floor(Math.min(maxWidth / cols, maxHeight / rows));
+
+            canvas.width = state.cellSize * cols;
+            canvas.height = state.cellSize * rows;
+            
+            // Fondo / Limpieza
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Estilos de línea Neón
+            ctx.strokeStyle = '#ff00de'; 
+            ctx.lineWidth = Math.max(2, state.cellSize / 8); 
+            ctx.lineCap = 'round';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ff00de';
+
+            // Dibujar Paredes
+            ctx.beginPath();
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const cell = state.maze[r][c];
+                    const x = c * state.cellSize;
+                    const y = r * state.cellSize;
+                    const s = state.cellSize;
+
+                    if (cell.walls.top) { ctx.moveTo(x, y); ctx.lineTo(x + s, y); }
+                    if (cell.walls.right) { ctx.moveTo(x + s, y); ctx.lineTo(x + s, y + s); }
+                    if (cell.walls.bottom) { ctx.moveTo(x + s, y + s); ctx.lineTo(x, y + s); }
+                    if (cell.walls.left) { ctx.moveTo(x, y + s); ctx.lineTo(x, y); }
+                }
+            }
+            ctx.stroke();
+
+            // Dibujar Meta
+            const gx = state.goal.x * state.cellSize + state.cellSize / 2;
+            const gy = state.goal.y * state.cellSize + state.cellSize / 2;
+            ctx.shadowBlur = 20; ctx.shadowColor = '#ffe600'; ctx.fillStyle = '#ffe600';
+            ctx.beginPath(); ctx.arc(gx, gy, state.cellSize / 3, 0, Math.PI * 2); ctx.fill();
+
+            // Dibujar Jugador
+            const px = state.player.x * state.cellSize + state.cellSize / 2;
+            const py = state.player.y * state.cellSize + state.cellSize / 2;
+            ctx.shadowBlur = 15; ctx.shadowColor = '#00f3ff'; ctx.fillStyle = '#00f3ff';
+            ctx.beginPath(); ctx.arc(px, py, state.cellSize / 3.5, 0, Math.PI * 2); ctx.fill();
+        }
+
+        /* --- INTEGRACIÓN CON LOVE ARCADE --- */
+// Añade esto al final del bloque <script> en games/maze.html
+
+// Inyectar css para botón volver
+const backBtn = document.createElement('a');
+backBtn.href = '../index.html';
+backBtn.innerHTML = 'Salir';
+backBtn.className = 'neon-btn';
+backBtn.style.cssText = 'position:absolute; top:10px; left:10px; padding:5px 10px; text-decoration:none; font-size:12px; z-index:100; border-radius:4px;';
+document.body.appendChild(backBtn);
+
+// Interceptar la función levelComplete para dar monedas
+const originalMazeComplete = levelComplete;
+levelComplete = function() {
+    originalMazeComplete(); // Ejecuta la visual original
+    
+    // Dar monedas
+    const REWARD = 30;
+    try {
+        const storeKey = 'gamecenter_v2_core';
+        let store = JSON.parse(localStorage.getItem(storeKey) || '{"coins":0}');
+        store.coins += REWARD;
+        localStorage.setItem(storeKey, JSON.stringify(store));
+    } catch(e) {
+        console.error("Error guardando monedas", e);
+    }
+};
+
+
+    </script>
 </body>
 </html>
