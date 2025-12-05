@@ -3,56 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Centro de Juegos Romántico</title>
+    <title>Love Arcade | Inicio</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-    <header>
-        <h1>💖 Love Arcade</h1>
-        <div>
-            <span class="coin-balance">🪙 <span class="coin-balance-display">0</span></span>
-            <button id="dark-mode-toggle" aria-label="Cambiar modo oscuro">🌙</button>
+    <header class="app-header">
+        <div class="brand">
+            <i data-lucide="heart-handshake"></i> Love Arcade
+        </div>
+        <div class="wallet-badge">
+            <i data-lucide="coins"></i>
+            <span class="coin-display">0</span>
         </div>
     </header>
 
     <main>
-        <section class="text-center">
-            <h2>¡Hola! Juega para ganar monedas y canjear regalos.</h2>
-        </section>
-
-        <h3>🎮 Juegos Disponibles</h3>
+        <h2>Selecciona un Destino</h2>
+        
         <div class="grid-container">
-            <div class="card">
-                <h3>🔤 Sopa de Letras</h3>
-                <p>Encuentra las palabras ocultas.</p>
-                <a href="games/wordsearch.html"><button>Jugar</button></a>
+            <div class="glass-card">
+                <div class="card-icon-header">
+                    <i data-lucide="type" size="48"></i>
+                </div>
+                <h3>Palabras del Destino</h3>
+                <p>Descubre los mensajes ocultos entre las estrellas.</p>
+                <a href="games/wordsearch.html" class="btn-primary">
+                    <i data-lucide="play"></i> Jugar Ahora
+                </a>
             </div>
-            <div class="card">
-                <h3>🌀 Laberinto del Amor</h3>
-                <p>Llega al corazón central.</p>
-                <a href="games/maze.html"><button>Jugar</button></a>
+
+            <div class="glass-card">
+                <div class="card-icon-header">
+                    <i data-lucide="map" size="48"></i>
+                </div>
+                <h3>Laberinto Neón</h3>
+                <p>Encuentra el camino hacia el corazón iluminado.</p>
+                <a href="games/maze.html" class="btn-primary">
+                    <i data-lucide="play"></i> Jugar Ahora
+                </a>
             </div>
-            <div class="card">
-                <h3>🧠 Memoria</h3>
-                <p>Encuentra las parejas.</p>
-                <a href="games/memory.html"><button>Jugar</button></a>
+
+            <div class="glass-card" style="border-color: var(--gold);">
+                <div class="card-icon-header" style="color: var(--gold);">
+                    <i data-lucide="gift" size="48"></i>
+                </div>
+                <h3>Tienda de Regalos</h3>
+                <p>Canjea tus puntos por experiencias reales.</p>
+                <a href="shop.html" class="btn-primary" style="background: var(--gold); color: #000;">
+                    <i data-lucide="shopping-bag"></i> Ir a Canjear
+                </a>
             </div>
         </div>
-
-        <hr style="margin: 2rem 0;">
-
-        <div class="card text-center">
-            <h3>🎁 Tienda de Regalos</h3>
-            <p>Canjea tus monedas duramente ganadas por premios reales.</p>
-            <a href="shop.html"><button class="secondary" style="background-color: var(--secondary);">Ir a la Tienda</button></a>
-        </div>
-
-        <section style="margin-top: 3rem; border-top: 1px solid #ccc; padding-top: 1rem;">
-            <h4>⚙️ Gestión de Datos</h4>
-            <button id="btn-export">📥 Exportar Progreso</button>
-            <label for="inp-import" class="button" style="display:inline-block; background:#607d8b; color:white; padding:10px 20px; border-radius:8px; cursor:pointer;">📤 Importar Progreso</label>
-            <input type="file" id="inp-import" accept=".json" class="hidden">
-        </section>
     </main>
 
     <script src="js/app.js"></script>
