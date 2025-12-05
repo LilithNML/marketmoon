@@ -1,124 +1,163 @@
 :root {
-    --primary: #e91e63; /* Rosa romántico */
-    --primary-dark: #c2185b;
-    --secondary: #9c27b0;
-    --bg-color: #fdf2f8;
-    --text-color: #333;
-    --card-bg: #fff;
-    --border-radius: 12px;
-    --shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-/* Modo Oscuro */
-body.dark-mode {
-    --bg-color: #121212;
-    --text-color: #e0e0e0;
-    --card-bg: #1e1e1e;
-    --shadow: 0 4px 6px rgba(0,0,0,0.5);
+    --bg-dark: #0f172a;
+    --glass-bg: rgba(30, 41, 59, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --primary: #ec4899; /* Rosa neón elegante */
+    --accent: #8b5cf6;  /* Violeta */
+    --gold: #fbbf24;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --radius: 16px;
+    --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-color);
+    font-family: 'Inter', system-ui, sans-serif;
+    background: radial-gradient(circle at top left, #1e1b4b, var(--bg-dark));
+    color: var(--text-main);
     margin: 0;
-    padding: 0;
-    transition: background 0.3s, color 0.3s;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
 }
 
-header {
-    background: linear-gradient(45deg, var(--primary), var(--secondary));
-    color: white;
-    padding: 1rem;
+/* Header Premium */
+.app-header {
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: var(--shadow);
+    border-bottom: 1px solid var(--glass-border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
-.coin-balance {
-    font-weight: bold;
-    font-size: 1.2rem;
-    background: rgba(255,255,255,0.2);
-    padding: 5px 15px;
-    border-radius: 20px;
+.brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(to right, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
+.wallet-badge {
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    color: var(--gold);
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s;
+}
+
+/* Contenedores */
 main {
-    flex: 1;
-    padding: 2rem;
     max-width: 1200px;
     margin: 0 auto;
+    padding: 2rem;
     width: 100%;
     box-sizing: border-box;
 }
 
-/* Cards & Grid */
+h2 {
+    font-weight: 300;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 1rem;
+}
+
+/* Grid de Cartas */
 .grid-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 2rem;
 }
 
-.card {
-    background: var(--card-bg);
-    border-radius: var(--border-radius);
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
     padding: 1.5rem;
-    box-shadow: var(--shadow);
-    text-align: center;
-    transition: transform 0.2s;
+    transition: transform 0.3s, box-shadow 0.3s;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
-.card:hover {
+.glass-card:hover {
     transform: translateY(-5px);
+    box-shadow: 0 10px 40px rgba(236, 72, 153, 0.15);
+    border-color: rgba(236, 72, 153, 0.3);
 }
 
-button {
-    background-color: var(--primary);
+/* Elementos de la carta */
+.card-icon-header {
+    margin-bottom: 1rem;
+    color: var(--primary);
+}
+
+.card-img-top {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.glass-card h3 { margin: 0 0 0.5rem 0; font-size: 1.25rem; }
+.glass-card p { color: var(--text-muted); font-size: 0.9rem; flex-grow: 1; margin-bottom: 1.5rem; }
+
+/* Botones Premium */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.btn-primary:hover { opacity: 0.9; }
+
+.btn-secondary {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-main);
+    border: 1px solid var(--glass-border);
+    padding: 0.8rem 1.5rem;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 1rem;
-    margin-top: 10px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     transition: background 0.2s;
 }
-
-button:hover {
-    background-color: var(--primary-dark);
-}
-
-button.secondary {
-    background-color: #607d8b;
-}
-
-/* Utilidades */
-.hidden { display: none !important; }
-.text-center { text-align: center; }
-
-/* Animación Confeti (Canvas overlay) */
-#confetti-canvas {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    z-index: 999;
-}
-
-/* Navegación inferior móvil o menú */
-nav a {
-    color: white;
-    text-decoration: none;
-    margin-left: 15px;
-    font-weight: bold;
-}
+.btn-secondary:hover { background: rgba(255,255,255,0.1); }
 
 /* Responsive */
 @media (max-width: 600px) {
-    header { flex-direction: column; gap: 10px; }
-    .grid-container { grid-template-columns: 1fr; }
+    .app-header { padding: 1rem; }
+    main { padding: 1rem; }
+    h2 { font-size: 1.5rem; }
 }
