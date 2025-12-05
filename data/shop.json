@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "name": "Beso Virtual",
+    "description": "Un beso enviado con mucho amor.",
+    "price": 50,
+    "image": "💋"
+  },
+  {
+    "id": 2,
+    "name": "Vale por un Masaje",
+    "description": "Válido por 15 minutos de masaje de hombros.",
+    "price": 200,
+    "image": "💆‍♂️"
+  },
+  {
+    "id": 3,
+    "name": "Cena Casera",
+    "description": "Yo cocino tu plato favorito esta noche.",
+    "price": 500,
+    "image": "🍝"
+  },
+  {
+    "id": 4,
+    "name": "Noche de Películas",
+    "description": "Tú eliges la película y yo pongo las palomitas.",
+    "price": 150,
+    "image": "🎬"
+  }
+]
