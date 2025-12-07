@@ -2,36 +2,25 @@
   {
     "id": 1,
     "name": "Cena Romántica",
-    "desc": "Yo cocino y lavo los platos. Menú a tu elección.",
+    "desc": "Yo cocino tu plato favorito. (Único)",
     "price": 200,
-    "image": "https://placehold.co/400x300/1e293b/ec4899?text=Cena+Romantica"
+    "stock": 1,
+    "image": "https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=400&q=80"
   },
   {
     "id": 2,
-    "name": "Masaje",
-    "desc": "30 minutos de masaje.",
+    "name": "Masaje Relax",
+    "desc": "30 minutos de masaje. (Pack de 5)",
     "price": 100,
-    "image": "https://placehold.co/400x300/1e293b/8b5cf6?text=Masaje"
+    "stock": 5,
+    "image": "https://images.unsplash.com/photo-1600334089648-b0d9d302427f?auto=format&fit=crop&w=400&q=80"
   },
   {
     "id": 3,
     "name": "Noche de Cine",
-    "desc": "Palomitas, manta y maratón de tu serie favorita.",
+    "desc": "Palomitas y peli a elección.",
     "price": 150,
-    "image": "https://placehold.co/400x300/1e293b/fbbf24?text=Cine+en+Casa"
-  },
-  {
-    "id": 4,
-    "name": "x1 Foto con falda.",
-    "desc": "Una foto usando falda, especialmente para ti.",
-    "price": 550,
-    "image": "https://placehold.co/400x300/1e293b/fbbf24?text=Falda"
-  },
-  {
-    "id": 5,
-    "name": "Comprarte un videojuego.",
-    "desc": "El vídeo juego que tu quieras.",
-    "price": 10050,
-    "image": "https://placehold.co/400x300/1e293b/fbbf24?text=Un+Video+Juego"
+    "stock": 3,
+    "image": "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=400&q=80"
   }
 ]
