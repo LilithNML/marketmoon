@@ -3,228 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Laberinto Material</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Neon Maze</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* Estilos críticos del juego */
-        :root { --bg-color: #050210; --wall-color: #ff00de; --player-color: #00f3ff; --goal-color: #ffe600; }
-        body { background-color: var(--bg-color); overflow: hidden; touch-action: none; margin: 0; font-family: sans-serif; }
-        #game-container { position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
-        canvas { border-radius: 8px; background: rgba(255,255,255,0.02); box-shadow: 0 0 20px rgba(255,0,222,0.2); max-width: 95%; max-height: 80%; }
+        :root { --bg: #020617; --wall: #ec4899; --player: #06b6d4; --goal: #fbbf24; }
+        body { margin: 0; background: var(--bg); overflow: hidden; font-family: sans-serif; touch-action: none; user-select: none; }
         
-        /* UI Overlay mejorado */
-        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
-        .interactive { pointer-events: auto; }
+        #game-area { position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        canvas { background: rgba(255,255,255,0.03); border-radius: 8px; box-shadow: 0 0 15px var(--wall); max-width: 95vw; max-height: 60vh; }
         
-        /* Modales */
-        .modal { position: absolute; inset: 0; background: rgba(5, 2, 16, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 50; text-align: center; }
-        .hidden { display: none !important; }
+        /* UI Overlay */
+        .ui-top { position: absolute; top: 10px; left: 10px; z-index: 10; display: flex; gap: 10px; }
+        .back-btn { background: rgba(255,255,255,0.1); color: white; border: none; padding: 8px 12px; border-radius: 20px; text-decoration: none; display: flex; align-items: center; gap: 5px; font-size: 14px; backdrop-filter: blur(5px); }
         
-        .neon-btn {
-            background: transparent; border: 2px solid var(--wall-color); color: white;
-            padding: 15px 40px; font-size: 1.2rem; font-weight: bold; cursor: pointer;
-            margin-top: 20px; text-transform: uppercase; letter-spacing: 2px;
-            transition: 0.3s;
-        }
-        .neon-btn:active { background: var(--wall-color); }
+        /* D-PAD VIRTUAL (MEJORA DE CONTROL) */
+        .d-pad { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: grid; grid-template-columns: 60px 60px 60px; grid-template-rows: 60px 60px; gap: 5px; z-index: 20; }
+        .d-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: white; display: flex; justify-content: center; align-items: center; font-size: 24px; touch-action: manipulation; cursor: pointer; transition: 0.1s; }
+        .d-btn:active { background: var(--player); color: black; }
+        /* Grid placement */
+        .up { grid-column: 2; grid-row: 1; }
+        .left { grid-column: 1; grid-row: 2; }
+        .down { grid-column: 2; grid-row: 2; }
+        .right { grid-column: 3; grid-row: 2; }
 
-        /* Botón Salir (Material style) */
-        #exit-btn {
-            position: absolute; top: 16px; left: 16px; z-index: 100;
-            background: rgba(255,255,255,0.1); color: white;
-            padding: 8px 16px; border-radius: 20px; text-decoration: none;
-            display: flex; align-items: center; gap: 8px; font-size: 14px;
-            backdrop-filter: blur(4px); pointer-events: auto;
+        /* Pantallas */
+        .modal { position: absolute; inset: 0; background: rgba(2,6,23,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 50; text-align: center; color: white; }
+        .hidden { display: none !important; }
+        .big-btn { background: transparent; border: 2px solid var(--wall); color: white; padding: 15px 40px; font-size: 1.2rem; margin-top: 20px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
+        .big-btn:active { background: var(--wall); }
+
+        /* Media Queries para ocultar D-Pad en Desktop si se desea, 
+           pero es útil dejarlo para tablets/laptops touch */
+        @media (min-width: 1024px) {
+            .d-pad { bottom: 40px; opacity: 0.5; } 
+            .d-pad:hover { opacity: 1; }
         }
     </style>
 </head>
 <body>
-    <a href="../index.html" id="exit-btn"><i data-lucide="arrow-left" size="16"></i> Salir</a>
-
-    <div id="game-container">
-        <canvas id="mazeCanvas"></canvas>
+    <div class="ui-top">
+        <a href="../index.html" class="back-btn"><i data-lucide="arrow-left" size="16"></i> Salir</a>
+        <div class="back-btn" id="lvl-badge">Nivel 1</div>
     </div>
 
-    <div id="start-screen" class="modal interactive">
-        <h1 class="text-5xl text-pink-500 font-bold mb-4" style="text-shadow: 0 0 10px #ff00de">NEON MAZE</h1>
-        <p class="text-blue-200 mb-8">Encuentra la salida</p>
-        <button id="start-btn" class="neon-btn interactive">COMENZAR</button>
+    <div id="game-area">
+        <canvas id="canvas"></canvas>
     </div>
 
-    <div id="level-modal" class="modal hidden interactive">
-        <h2 class="text-3xl text-white mb-2">¡Nivel Completado!</h2>
-        <p id="level-msg" class="text-yellow-400 mb-6"></p>
-        <button id="next-level-btn" class="neon-btn interactive">Siguiente</button>
+    <div class="d-pad">
+        <button class="d-btn up" onpointerdown="input(0, -1)"><i data-lucide="chevron-up"></i></button>
+        <button class="d-btn left" onpointerdown="input(-1, 0)"><i data-lucide="chevron-left"></i></button>
+        <button class="d-btn down" onpointerdown="input(0, 1)"><i data-lucide="chevron-down"></i></button>
+        <button class="d-btn right" onpointerdown="input(1, 0)"><i data-lucide="chevron-right"></i></button>
     </div>
 
+    <div id="start-screen" class="modal">
+        <h1 style="color:var(--wall); text-shadow:0 0 10px var(--wall); font-size:3rem;">NEON MAZE</h1>
+        <p>Usa las flechas o el teclado</p>
+        <button class="big-btn" onclick="game.start()">JUGAR</button>
+    </div>
+
+    <div id="win-modal" class="modal hidden">
+        <h2 style="color:var(--goal)">¡NIVEL COMPLETADO!</h2>
+        <p id="reward-msg"></p>
+        <button class="big-btn" onclick="game.next()">Siguiente</button>
+    </div>
+
+    <script src="../js/app.js"></script>
     <script>
-        // --- CONFIGURACIÓN ---
-        const LEVELS = [5, 7, 9, 11, 13, 15, 17, 19, 21, 25]; // Tamaños de laberinto
-        let state = { level: 0, player: {x:0, y:0}, goal: {x:0, y:0}, maze: [], active: false, cellSize: 0 };
-        const canvas = document.getElementById('mazeCanvas');
-        const ctx = canvas.getContext('2d');
-
-        // --- INICIO ---
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            // Cargar progreso local del laberinto (nivel)
-            const savedLvl = localStorage.getItem('maze_local_level');
-            if(savedLvl) state.level = parseInt(savedLvl);
-
-            // Listeners
-            document.getElementById('start-btn').addEventListener('click', startGame);
-            document.getElementById('next-level-btn').addEventListener('click', nextLevel);
-            
-            // Controles
-            window.addEventListener('keydown', handleKey);
-            setupTouch();
-        });
-
-        function startGame() {
-            document.getElementById('start-screen').classList.add('hidden');
-            loadLevel();
-        }
-
-        function loadLevel() {
-            const size = LEVELS[state.level % LEVELS.length];
-            state.maze = generateMaze(size, size);
-            state.player = {x: 0, y: 0};
-            state.goal = {x: size-1, y: size-1};
-            state.active = true;
-            resize();
-            draw();
-        }
-
-        function nextLevel() {
-            state.level++;
-            localStorage.setItem('maze_local_level', state.level);
-            document.getElementById('level-modal').classList.add('hidden');
-            loadLevel();
-        }
-
-        // --- INTEGRACIÓN DE MONEDAS (CORE FIX) ---
-        function onWin() {
-            state.active = false;
-            
-            // 1. Calcular Recompensa
-            const REWARD = 30;
-            
-            // 2. Comunicar con App.js (Billetera Central)
-            let msg = "¡Nivel Superado!";
-            try {
-                // Leer estado global
-                const storeKey = 'gamecenter_material_v1';
-                let store = JSON.parse(localStorage.getItem(storeKey) || '{"coins":0,"progress":{"maze":[]}}');
+        class MazeGame {
+            constructor() {
+                this.levels = [5, 7, 9, 11, 15, 19, 21, 25]; // Grid sizes
+                this.state = { lvl: 0, grid: [], p: {x:0, y:0}, g: {x:0, y:0}, active: false };
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
                 
-                // Verificar progreso
-                if(!store.progress) store.progress = {};
-                if(!store.progress.maze) store.progress.maze = [];
+                // Recuperar progreso
+                const saved = localStorage.getItem('maze_lvl');
+                if(saved) this.state.lvl = parseInt(saved);
 
-                if(!store.progress.maze.includes(state.level)) {
-                    // PAGO
-                    store.progress.maze.push(state.level);
-                    store.coins += REWARD;
-                    localStorage.setItem(storeKey, JSON.stringify(store));
-                    msg += `<br><span style="color:#ffe600; font-size:0.8em">+${REWARD} Monedas (Bono Primera vez)</span>`;
-                } else {
-                    // REPLAY
-                    msg += `<br><span style="color:#aaa; font-size:0.8em">Nivel ya recompensado anteriormente</span>`;
-                }
-            } catch(e) {
-                console.error("Error saving coins", e);
+                window.addEventListener('resize', () => this.draw());
+                window.addEventListener('keydown', (e) => this.handleKey(e));
+                
+                document.getElementById('lvl-badge').innerText = `Nivel ${this.state.lvl + 1}`;
             }
 
-            // 3. Mostrar Modal
-            document.getElementById('level-msg').innerHTML = msg;
-            document.getElementById('level-modal').classList.remove('hidden');
-        }
+            start() {
+                document.getElementById('start-screen').classList.add('hidden');
+                this.initLevel();
+            }
 
-        // --- LÓGICA JUEGO (Simplificada para funcionamiento) ---
-        function generateMaze(cols, rows) {
-            let maze = Array(rows).fill().map((_, y) => Array(cols).fill().map((_, x) => ({x, y, walls:{t:1,r:1,b:1,l:1}, visited:false})));
-            let stack = [maze[0][0]];
-            maze[0][0].visited = true;
-            while(stack.length) {
-                let curr = stack.pop();
-                let n = [[0,-1,'t','b'],[1,0,'r','l'],[0,1,'b','t'],[-1,0,'l','r']]
-                    .map(d => ({x:curr.x+d[0], y:curr.y+d[1], w1:d[2], w2:d[3]}))
-                    .filter(p => p.x>=0 && p.x<cols && p.y>=0 && p.y<rows && !maze[p.y][p.x].visited);
-                if(n.length) {
-                    stack.push(curr);
-                    let nextPos = n[Math.floor(Math.random()*n.length)];
-                    let next = maze[nextPos.y][nextPos.x];
-                    curr.walls[nextPos.w1] = 0;
-                    next.walls[nextPos.w2] = 0;
-                    next.visited = true;
-                    stack.push(next);
+            initLevel() {
+                const size = this.levels[this.state.lvl % this.levels.length];
+                this.state.grid = this.generate(size, size);
+                this.state.p = {x:0, y:0};
+                this.state.g = {x:size-1, y:size-1};
+                this.state.active = true;
+                
+                document.getElementById('lvl-badge').innerText = `Nivel ${this.state.lvl + 1}`;
+                this.resize();
+            }
+
+            // Algoritmo DFS Backtracker
+            generate(cols, rows) {
+                let maze = Array(rows).fill().map((_,y) => Array(cols).fill().map((_,x) => ({x,y, walls:{t:1,r:1,b:1,l:1}, vis:false})));
+                let stack = [maze[0][0]];
+                maze[0][0].vis = true;
+                
+                while(stack.length) {
+                    let curr = stack.pop();
+                    let n = [[0,-1,'t','b'],[1,0,'r','l'],[0,1,'b','t'],[-1,0,'l','r']]
+                        .map(d => ({x:curr.x+d[0], y:curr.y+d[1], w1:d[2], w2:d[3]}))
+                        .filter(p => p.x>=0 && p.x<cols && p.y>=0 && p.y<rows && !maze[p.y][p.x].vis);
+                    
+                    if(n.length) {
+                        stack.push(curr);
+                        let nextP = n[Math.floor(Math.random()*n.length)];
+                        let next = maze[nextP.y][nextP.x];
+                        curr.walls[nextP.w1] = 0;
+                        next.walls[nextP.w2] = 0;
+                        next.vis = true;
+                        stack.push(next);
+                    }
+                }
+                return maze;
+            }
+
+            resize() {
+                const s = Math.min(window.innerWidth, window.innerHeight*0.6) - 20;
+                const cols = this.state.grid[0].length;
+                this.cellSize = Math.floor(s / cols);
+                this.canvas.width = this.cellSize * cols;
+                this.canvas.height = this.canvas.width;
+                this.draw();
+            }
+
+            draw() {
+                if(!this.state.active) return;
+                const cs = this.cellSize;
+                const ctx = this.ctx;
+                
+                // Clear
+                ctx.fillStyle = '#020617';
+                ctx.fillRect(0,0, this.canvas.width, this.canvas.height);
+
+                // Walls
+                ctx.strokeStyle = '#ec4899';
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#ec4899';
+                
+                ctx.beginPath();
+                this.state.grid.forEach(row => row.forEach(c => {
+                    let x=c.x*cs, y=c.y*cs;
+                    if(c.walls.t) {ctx.moveTo(x,y); ctx.lineTo(x+cs,y);}
+                    if(c.walls.r) {ctx.moveTo(x+cs,y); ctx.lineTo(x+cs,y+cs);}
+                    if(c.walls.b) {ctx.moveTo(x,y+cs); ctx.lineTo(x+cs,y+cs);}
+                    if(c.walls.l) {ctx.moveTo(x,y+cs); ctx.lineTo(x,y);}
+                }));
+                ctx.stroke();
+
+                // Goal
+                ctx.shadowColor = '#fbbf24';
+                ctx.fillStyle = '#fbbf24';
+                ctx.fillRect(this.state.g.x*cs+cs*0.25, this.state.g.y*cs+cs*0.25, cs*0.5, cs*0.5);
+
+                // Player
+                ctx.shadowColor = '#06b6d4';
+                ctx.fillStyle = '#06b6d4';
+                ctx.beginPath();
+                ctx.arc(this.state.p.x*cs+cs*0.5, this.state.p.y*cs+cs*0.5, cs*0.3, 0, Math.PI*2);
+                ctx.fill();
+            }
+
+            move(dx, dy) {
+                if(!this.state.active) return;
+                const c = this.state.grid[this.state.p.y][this.state.p.x];
+                let moved = false;
+                
+                if(dy === -1 && !c.walls.t) { this.state.p.y--; moved = true; }
+                else if(dx === 1 && !c.walls.r) { this.state.p.x++; moved = true; }
+                else if(dy === 1 && !c.walls.b) { this.state.p.y++; moved = true; }
+                else if(dx === -1 && !c.walls.l) { this.state.p.x--; moved = true; }
+
+                if(moved) {
+                    this.draw();
+                    if(this.state.p.x === this.state.g.x && this.state.p.y === this.state.g.y) this.win();
                 }
             }
-            return maze;
+
+            win() {
+                this.state.active = false;
+                const res = GameCenter.completeLevel('maze', this.state.lvl, 30);
+                
+                document.getElementById('reward-msg').innerHTML = res.paid 
+                    ? `<span style='color:#10b981'>+30 Monedas</span>` 
+                    : `<span style='color:#94a3b8'>Replay (Sin monedas)</span>`;
+                
+                document.getElementById('win-modal').classList.remove('hidden');
+            }
+
+            next() {
+                this.state.lvl++;
+                localStorage.setItem('maze_lvl', this.state.lvl);
+                document.getElementById('win-modal').classList.add('hidden');
+                this.initLevel();
+            }
+
+            handleKey(e) {
+                if(e.key === 'ArrowUp') this.move(0, -1);
+                if(e.key === 'ArrowRight') this.move(1, 0);
+                if(e.key === 'ArrowDown') this.move(0, 1);
+                if(e.key === 'ArrowLeft') this.move(-1, 0);
+            }
         }
 
-        function move(dx, dy) {
-            if(!state.active) return;
-            let c = state.maze[state.player.y][state.player.x];
-            if(dy === -1 && !c.walls.t) state.player.y--;
-            else if(dx === 1 && !c.walls.r) state.player.x++;
-            else if(dy === 1 && !c.walls.b) state.player.y++;
-            else if(dx === -1 && !c.walls.l) state.player.x--;
-            else return; // Pared
-            draw();
-            if(state.player.x === state.goal.x && state.player.y === state.goal.y) onWin();
-        }
+        lucide.createIcons();
+        const game = new MazeGame();
 
-        function draw() {
-            if(!state.maze.length) return;
-            ctx.fillStyle = '#050210'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            let cs = state.cellSize;
-            ctx.strokeStyle = '#ff00de'; ctx.lineWidth = 2; ctx.lineCap = 'round';
-            ctx.beginPath();
-            state.maze.forEach(row => row.forEach(c => {
-                let x=c.x*cs, y=c.y*cs;
-                if(c.walls.t) {ctx.moveTo(x,y); ctx.lineTo(x+cs,y);}
-                if(c.walls.r) {ctx.moveTo(x+cs,y); ctx.lineTo(x+cs,y+cs);}
-                if(c.walls.b) {ctx.moveTo(x,y+cs); ctx.lineTo(x+cs,y+cs);}
-                if(c.walls.l) {ctx.moveTo(x,y+cs); ctx.lineTo(x,y);}
-            }));
-            ctx.stroke();
-            // Jugador
-            ctx.fillStyle = '#00f3ff';
-            ctx.beginPath(); ctx.arc(state.player.x*cs+cs/2, state.player.y*cs+cs/2, cs/3, 0, 7); ctx.fill();
-            // Meta
-            ctx.fillStyle = '#ffe600';
-            ctx.fillRect(state.goal.x*cs+cs/4, state.goal.y*cs+cs/4, cs/2, cs/2);
-        }
-
-        function resize() {
-            let s = Math.min(window.innerWidth, window.innerHeight) - 40;
-            let cols = state.maze[0]?.length || 5;
-            state.cellSize = Math.floor(s / cols);
-            canvas.width = state.cellSize * cols;
-            canvas.height = canvas.width;
-            draw();
-        }
-        window.addEventListener('resize', resize);
-
-        function handleKey(e) {
-            if(e.key.startsWith('Arrow')) e.preventDefault();
-            if(e.key === 'ArrowUp') move(0,-1);
-            if(e.key === 'ArrowDown') move(0,1);
-            if(e.key === 'ArrowLeft') move(-1,0);
-            if(e.key === 'ArrowRight') move(1,0);
-        }
-
-        function setupTouch() {
-            let tx=0, ty=0;
-            canvas.addEventListener('touchstart', e => {tx=e.touches[0].clientX; ty=e.touches[0].clientY;}, {passive:false});
-            canvas.addEventListener('touchmove', e => e.preventDefault(), {passive:false});
-            canvas.addEventListener('touchend', e => {
-                let dx = e.changedTouches[0].clientX - tx;
-                let dy = e.changedTouches[0].clientY - ty;
-                if(Math.abs(dx) > Math.abs(dy)) move(dx>0?1:-1, 0);
-                else move(0, dy>0?1:-1);
-            });
+        // Función global para el D-Pad
+        function input(dx, dy) {
+            game.move(dx, dy);
         }
     </script>
 </body>
