@@ -1,45 +1,37 @@
 /**
- * Game Center Core v3 - Optimizado y Seguro
+ * Game Center Core - Material Edition
  */
 
 const CONFIG = {
-    stateKey: 'gamecenter_v3_core',
-    initialCoins: 50 // Regalo de bienvenida
+    stateKey: 'gamecenter_material_v1',
+    initialCoins: 0 // CORREGIDO: Empieza en 0
 };
 
-// Estado inicial optimizado
+// Estado por defecto
 const defaultState = {
     coins: CONFIG.initialCoins,
-    // Registro de niveles pagados para evitar farming
-    progress: {
-        maze: [],       // Guardará IDs de niveles completados ej: [0, 1, 2]
-        wordsearch: []  // Guardará IDs de capítulos completados
-    },
+    progress: { maze: [], wordsearch: [] }, // Registro de IDs completados
     history: []
 };
 
 let store = { ...defaultState };
 
-// --- Inicialización ---
 document.addEventListener('DOMContentLoaded', () => {
     loadState();
     updateUI();
     if (window.lucide) lucide.createIcons();
 });
 
-// --- Gestión de Estado ---
 function loadState() {
     try {
         const data = localStorage.getItem(CONFIG.stateKey);
         if (data) {
             const parsed = JSON.parse(data);
-            // Fusionamos con default para evitar errores si añadimos juegos nuevos
             store = { ...defaultState, ...parsed, progress: { ...defaultState.progress, ...parsed.progress } };
         } else {
-            saveState();
+            saveState(); // Guarda el 0 inicial
         }
     } catch (e) {
-        console.error("Error cargando datos, reiniciando store segura.");
         store = { ...defaultState };
     }
 }
@@ -50,49 +42,50 @@ function saveState() {
 }
 
 function updateUI() {
-    // Actualización eficiente del DOM (solo texto)
-    document.querySelectorAll('.coin-display').forEach(el => {
-        el.textContent = store.coins;
-    });
+    document.querySelectorAll('.coin-display').forEach(el => el.textContent = store.coins);
 }
 
-// --- API Pública Segura ---
-
 window.GameCenter = {
-    /**
-     * Intenta reclamar recompensa por nivel.
-     * @param {string} gameId - Identificador del juego ('maze', 'wordsearch')
-     * @param {number|string} levelId - Nivel completado
-     * @param {number} rewardAmount - Cantidad de monedas
-     * @returns {boolean} - True si se pagó, False si ya estaba completado (replay)
-     */
+    // Sistema seguro para pagar solo la primera vez por nivel
     completeLevel: (gameId, levelId, rewardAmount) => {
-        // 1. Validar si el juego existe en el registro
         if (!store.progress[gameId]) store.progress[gameId] = [];
 
-        // 2. Verificar si ya se pagó este nivel
+        // Si ya existe el nivel en el historial, NO pagar
         if (store.progress[gameId].includes(levelId)) {
-            console.log(`Nivel ${levelId} de ${gameId} ya pagado. Modo Replay.`);
-            return false; // No pagar
+            return { paid: false, total: store.coins };
         }
 
-        // 3. Pagar y Registrar
+        // Si es nuevo, pagar
         store.progress[gameId].push(levelId);
         store.coins += rewardAmount;
         saveState();
-        
-        console.log(`¡Pago primerizo! +${rewardAmount} monedas.`);
-        return true; // Pagado
+        return { paid: true, total: store.coins };
+    },
+
+    // Generar código de seguridad único para compras
+    generateSecurityCode: (itemName) => {
+        const prefix = itemName.substring(0, 3).toUpperCase();
+        const random = Math.floor(Math.random() * 9999);
+        const date = Date.now().toString().slice(-4);
+        return `${prefix}-${date}-${random}`;
     },
 
     spendCoins: (amount, itemName) => {
         if (store.coins >= amount) {
             store.coins -= amount;
-            store.history.push({ item: itemName, date: new Date().toISOString() });
+            const code = window.GameCenter.generateSecurityCode(itemName);
+            
+            store.history.push({ 
+                item: itemName, 
+                cost: amount, 
+                code: code,
+                date: new Date().toISOString() 
+            });
+            
             saveState();
-            return true;
+            return { success: true, code: code };
         }
-        return false;
+        return { success: false };
     },
 
     getBalance: () => store.coins
