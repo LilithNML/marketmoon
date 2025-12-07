@@ -8,8 +8,8 @@
   },
   {
     "id": 2,
-    "name": "Masaje Relax",
-    "desc": "30 minutos de masaje con aceites esenciales.",
+    "name": "Masaje",
+    "desc": "30 minutos de masaje.",
     "price": 100,
     "image": "https://placehold.co/400x300/1e293b/8b5cf6?text=Masaje"
   },
