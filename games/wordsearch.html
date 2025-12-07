@@ -4,206 +4,236 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sopa de Letras</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
+        /* --- ESTILOS INDEPENDIENTES (Paleta Soft Dark) --- */
         :root {
-            --bg-soft: #fff1f2; /* Rosa muy pálido */
-            --primary: #be123c; /* Rosa fuerte elegante */
-            --primary-light: #fda4af;
-            --surface: #ffffff;
-            --text-main: #334155;
-            --text-light: #64748b;
-            --highlight: #fecdd3;
-            --found: #10b981; /* Verde éxito */
-            --secret: #8b5cf6; /* Violeta secreto */
-            --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+            --bg-color: #0f172a;       /* Fondo principal oscuro */
+            --grid-bg: #1e293b;        /* Fondo del tablero */
+            --cell-idle: #334155;      /* Color celda inactiva */
+            --text-main: #f1f5f9;      /* Texto principal */
+            --text-muted: #94a3b8;     /* Texto secundario */
+            
+            --accent: #818cf8;         /* Color de selección (Indigo suave) */
+            --found: #34d399;          /* Color encontrado (Verde menta) */
+            --hint: #fbbf24;           /* Color pista (Ámbar) */
+            --secret: #d8b4fe;         /* Color secreto (Lila) */
         }
 
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
         body {
-            background-color: var(--bg-soft);
+            background-color: var(--bg-color);
             color: var(--text-main);
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            /* Evitar rebote en iOS */
-            overscroll-behavior: none;
+            overflow-x: hidden;
+            user-select: none;
         }
 
-        /* --- Layout Seguro (Márgenes) --- */
-        .layout-container {
+        /* Cabecera limpia */
+        .header {
             width: 100%;
             max-width: 500px;
-            padding: 20px 24px 40px 24px; /* Márgenes seguros */
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        /* --- Cabecera --- */
-        .header {
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            background: rgba(15, 23, 42, 0.95);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
-        .btn-icon {
-            background: var(--surface);
-            border: 1px solid rgba(0,0,0,0.05);
-            color: var(--text-main);
-            padding: 8px 12px;
-            border-radius: 12px;
+        .btn-nav {
+            background: rgba(255,255,255,0.1);
+            color: white;
             text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             gap: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-            transition: transform 0.1s;
-        }
-        .btn-icon:active { transform: scale(0.95); }
-
-        .level-badge {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--primary);
+            font-size: 0.9rem;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* --- Tablero --- */
-        .board-card {
-            background: var(--surface);
-            padding: 15px; /* Padding interno del tablero */
-            border-radius: 24px;
-            box-shadow: var(--shadow);
+        /* Área de Juego */
+        .game-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 10px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex: 1;
+        }
+
+        /* Grid (Tablero) */
+        .grid-wrapper {
+            background: var(--grid-bg);
+            padding: 8px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            margin: 0 auto;
+            width: 100%;
+            aspect-ratio: 1; /* Mantiene el cuadrado */
         }
 
         .grid {
             display: grid;
-            gap: 4px; /* Espacio entre letras */
+            gap: 3px; /* Espacio pequeño para que no se vea amontonado pero quepa todo */
             width: 100%;
-            aspect-ratio: 1;
-            user-select: none;
+            height: 100%;
         }
 
         .cell {
-            background: #f8fafc;
-            border-radius: 8px;
+            background: var(--cell-idle);
+            border-radius: 4px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-weight: 600;
-            font-size: clamp(12px, 4vw, 18px); /* Texto responsivo */
-            color: var(--text-light);
+            font-weight: bold;
+            font-size: clamp(14px, 4vw, 22px); /* Fuente adaptativa */
+            color: var(--text-muted);
             cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-            touch-action: none; /* Vital para arrastrar en móvil */
+            transition: transform 0.1s, background 0.2s;
         }
 
-        /* Estados de celda */
-        .cell.selected { background: var(--primary); color: white; transform: scale(0.95); border-radius: 50%; }
-        .cell.found { background: var(--found); color: white; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .cell.secret { background: var(--secret); color: white; animation: pulse 1.5s infinite; }
-        .cell.hint { background: #fbbf24; color: #451a03; border: 2px solid #b45309; }
+        /* Estados de Celdas */
+        .cell.selected { 
+            background: var(--accent); 
+            color: #0f172a; 
+            transform: scale(0.95); 
+            border-radius: 50%; 
+        }
+        
+        .cell.found { 
+            background: var(--found); 
+            color: #064e3b; 
+            animation: pop 0.3s;
+        }
+        
+        .cell.secret {
+            background: var(--secret);
+            color: #4c1d95;
+            animation: pulse 1.5s infinite;
+        }
 
-        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        /* Animación de Pista (Corrección P.4) */
+        .cell.hint-active {
+            background: var(--hint);
+            color: black;
+            border: 2px solid white;
+            z-index: 5;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px var(--hint);
+        }
 
-        /* --- Lista de Palabras --- */
-        .word-container {
+        @keyframes pop { 50% { transform: scale(1.2); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+        /* Lista de Palabras */
+        .word-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
             justify-content: center;
+            gap: 10px;
+            padding: 0 10px;
         }
 
         .word-tag {
-            background: var(--surface);
-            padding: 8px 14px;
-            border-radius: 12px;
+            background: rgba(255,255,255,0.05);
+            padding: 6px 12px;
+            border-radius: 15px;
             font-size: 0.9rem;
-            color: var(--text-main);
-            border: 1px solid rgba(0,0,0,0.05);
+            color: var(--text-muted);
+            border: 1px solid rgba(255,255,255,0.05);
             transition: 0.3s;
         }
+
         .word-tag.done {
             background: var(--found);
-            color: white;
-            opacity: 0.6;
+            color: #064e3b;
             text-decoration: line-through;
+            opacity: 0.7;
+            border-color: var(--found);
         }
 
-        /* --- Footer Controles --- */
+        /* Controles Inferiores */
         .controls {
             display: flex;
-            gap: 12px;
+            gap: 15px;
             margin-top: auto;
+            padding-bottom: 20px;
         }
 
         .btn-action {
             flex: 1;
+            padding: 12px;
             border: none;
-            padding: 14px;
-            border-radius: 16px;
-            font-weight: 600;
-            font-family: inherit;
-            cursor: pointer;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1rem;
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 8px;
-            font-size: 1rem;
+            cursor: pointer;
         }
 
-        .btn-hint { background: #fff7ed; color: #d97706; border: 1px solid #ffedd5; }
-        .btn-reset { background: var(--surface); color: var(--text-light); }
+        .btn-hint { background: var(--hint); color: #451a03; }
+        .btn-reset { background: #475569; color: white; }
 
-        /* --- Modales --- */
+        /* Modales */
         .modal-overlay {
-            position: fixed; inset: 0; background: rgba(255,255,255,0.9);
-            backdrop-filter: blur(5px); z-index: 100;
-            display: none; align-items: center; justify-content: center;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            display: none; justify-content: center; align-items: center;
             padding: 20px;
         }
-        .modal-card {
-            background: white; width: 100%; max-width: 340px;
-            padding: 30px; border-radius: 24px;
-            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1);
-            text-align: center; border: 1px solid rgba(0,0,0,0.05);
-            animation: slideUp 0.3s ease;
-        }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        .modal-btn {
-            width: 100%; padding: 12px; margin-top: 15px;
-            border-radius: 12px; border: none; font-weight: bold; cursor: pointer;
-            font-size: 1rem;
+        .modal-box {
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 16px;
+            max-width: 350px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
-        .btn-confirm { background: var(--primary); color: white; }
-        .btn-cancel { background: #f1f5f9; color: var(--text-main); margin-top: 8px; }
+
+        .modal-box h2 { color: var(--text-main); margin-top: 0; }
+        .modal-box p { color: var(--text-muted); line-height: 1.5; }
+
+        .btn-confirm { background: var(--accent); color: white; width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+        .btn-cancel { background: transparent; color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1); width: 100%; padding: 10px; border-radius: 8px; margin-top: 10px; cursor: pointer; }
 
     </style>
 </head>
 <body>
 
-    <div class="layout-container">
-        <div class="header">
-            <a href="../index.html" class="btn-icon">
-                <i data-lucide="arrow-left" size="18"></i> Salir
-            </a>
-            <span class="level-badge" id="level-title">Nivel 1</span>
+    <div class="header">
+        <a href="../index.html" class="btn-nav">
+            <i data-lucide="arrow-left" size="18"></i> Salir
+        </a>
+        <div style="font-weight:bold; color:var(--accent);" id="lvl-display">Nivel 1</div>
+    </div>
+
+    <div class="game-container">
+        
+        <div class="grid-wrapper">
+            <div id="grid" class="grid"></div>
         </div>
 
-        <div class="board-card">
-            <div id="grid-container" class="grid"></div>
-        </div>
-
-        <div class="word-container" id="word-list"></div>
+        <div id="words" class="word-list"></div>
 
         <div class="controls">
             <button class="btn-action btn-reset" onclick="game.reset()">
@@ -216,128 +246,121 @@
     </div>
 
     <div id="hint-modal" class="modal-overlay">
-        <div class="modal-card">
-            <div style="background:#fff7ed; width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 15px auto; color:#d97706;">
-                <i data-lucide="lightbulb" size="24"></i>
-            </div>
+        <div class="modal-box">
+            <i data-lucide="lightbulb" size="40" color="#fbbf24" style="margin-bottom:10px"></i>
             <h3>¿Usar una pista?</h3>
-            <p style="color:#64748b; margin-bottom:20px;">
-                Se revelará la primera letra de una palabra oculta.<br>
-                <strong>Costo: 5 Monedas</strong>
-            </p>
-            <button class="modal-btn btn-confirm" onclick="game.confirmHint()">Confirmar</button>
-            <button class="modal-btn btn-cancel" onclick="document.getElementById('hint-modal').style.display='none'">Cancelar</button>
+            <p>Te mostraremos la primera letra de una palabra que te falte.</p>
+            <div style="background:rgba(251, 191, 36, 0.1); padding:10px; border-radius:8px; color:#fbbf24; font-weight:bold; margin:10px 0;">
+                Costo: 5 Monedas
+            </div>
+            <button class="btn-confirm" onclick="game.confirmHint()">Confirmar</button>
+            <button class="btn-cancel" onclick="document.getElementById('hint-modal').style.display='none'">Cancelar</button>
         </div>
     </div>
 
     <div id="win-modal" class="modal-overlay">
-        <div class="modal-card">
-            <div style="background:#ecfdf5; width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 15px auto; color:#10b981;">
-                <i data-lucide="heart" size="30"></i>
-            </div>
-            <h2 style="margin:0; color:#334155;">¡Maravilloso!</h2>
-            <p id="win-msg" style="color:#64748b; margin:15px 0;">Mensaje romántico...</p>
-            <button class="modal-btn btn-confirm" onclick="game.nextLevel()">Continuar</button>
+        <div class="modal-box">
+            <i data-lucide="award" size="48" color="#34d399" style="margin-bottom:15px"></i>
+            <h2>¡Completado!</h2>
+            <p id="win-msg">Nivel Superado</p>
+            <button class="btn-confirm" onclick="game.next()">Siguiente Nivel</button>
         </div>
     </div>
 
     <script src="../js/app.js"></script>
     <script>
-        // Datos de Nivel
-        const levels = [
-            { id: 1, words: ["AMOR", "VIDA", "SOL", "LUNA"], secret: ["BESO"], msg: "Iluminas mis días como el sol." },
-            { id: 2, words: ["DULCE", "CIELO", "MAR", "FLOR"], secret: ["MIMO"], msg: "Eres más dulce que cualquier sueño." },
-            { id: 3, words: ["JUNTOS", "RISA", "CALMA", "LUZ"], secret: ["ABRAZO"], msg: "Tu risa es mi canción favorita." }
+        const LEVELS = [
+            { words: ["AMOR", "VIDA", "SOL", "LUNA"], secret: ["BESO"], msg: "Eres mi sol." },
+            { words: ["CIELO", "MAR", "FLOR", "LUZ"], secret: ["PASION"], msg: "Brillas como luz." },
+            { words: ["DULCE", "SUEÑO", "RISA", "PAZ"], secret: ["ETERNO"], msg: "Tu risa es paz." }
         ];
 
         class WordSearch {
             constructor() {
-                this.gridSize = 10;
-                this.state = { lvl: 0, found: [], grid: [], selecting: false };
-                this.dom = {
-                    grid: document.getElementById('grid-container'),
-                    list: document.getElementById('word-list'),
-                    title: document.getElementById('level-title')
+                this.size = 10;
+                this.state = { 
+                    lvl: 0, 
+                    grid: [], 
+                    found: [],
+                    // MAPA DE COORDENADAS: Clave para arreglar las pistas
+                    coordsMap: {} 
                 };
                 
+                this.dom = {
+                    grid: document.getElementById('grid'),
+                    words: document.getElementById('words'),
+                    lvl: document.getElementById('lvl-display')
+                };
+
                 // Cargar progreso
-                const saved = localStorage.getItem('ws_level_v2');
+                const saved = localStorage.getItem('ws_soft_lvl');
                 if(saved) this.state.lvl = parseInt(saved);
-                
-                this.initLevel();
+
+                this.init();
             }
 
-            initLevel() {
-                if(this.state.lvl >= levels.length) {
-                    alert("¡Has completado todos los niveles disponibles!");
+            init() {
+                if(this.state.lvl >= LEVELS.length) {
+                    alert("¡Has terminado todos los niveles!");
                     window.location.href = '../index.html';
                     return;
                 }
 
-                this.levelData = levels[this.state.lvl];
+                const data = LEVELS[this.state.lvl];
                 this.state.found = [];
-                this.dom.title.textContent = `Nivel ${this.state.lvl + 1}`;
+                this.state.coordsMap = {}; // Reset mapa
+                this.dom.lvl.textContent = `Nivel ${this.state.lvl + 1}`;
                 
-                this.generateBoard();
-                this.renderUI();
+                this.generate([...data.words, ...data.secret]);
+                this.renderWords(data.words);
             }
 
-            generateBoard() {
-                // Algoritmo Mejorado de Dispersión
-                // 1. Matriz vacía
-                const size = this.gridSize;
-                const grid = Array(size).fill().map(() => Array(size).fill(''));
-                const allWords = [...this.levelData.words, ...this.levelData.secret];
-
-                // 2. Colocar palabras
-                // Intentamos colocar las palabras largas primero
+            generate(allWords) {
+                // Matriz vacía
+                const grid = Array(this.size).fill().map(() => Array(this.size).fill(''));
+                
+                // Ordenar para mejor ajuste
                 allWords.sort((a,b) => b.length - a.length);
 
                 for(let word of allWords) {
                     let placed = false;
                     let attempts = 0;
-                    while(!placed && attempts < 150) {
-                        // Direcciones: 0:Horizontal, 1:Vertical, 2:Diagonal, 3:Diagonal Inv
-                        const dirType = Math.floor(Math.random() * 4); 
-                        const dirs = [[0,1], [1,0], [1,1], [1,-1]];
-                        const [dr, dc] = dirs[dirType];
+                    while(!placed && attempts < 100) {
+                        const dir = Math.floor(Math.random() * 3); // 0:H, 1:V, 2:D
+                        const dr = dir === 0 ? 0 : 1;
+                        const dc = dir === 1 ? 0 : 1;
                         
-                        const r = Math.floor(Math.random() * size);
-                        const c = Math.floor(Math.random() * size);
+                        const r = Math.floor(Math.random() * this.size);
+                        const c = Math.floor(Math.random() * this.size);
 
                         if(this.canPlace(grid, word, r, c, dr, dc)) {
                             this.place(grid, word, r, c, dr, dc);
+                            
+                            // GUARDAR COORDENADA INICIAL REAL (Corrección Pistas)
+                            this.state.coordsMap[word] = { r, c };
+                            
                             placed = true;
                         }
                         attempts++;
                     }
                 }
 
-                // 3. Rellenar con "Ruido Inteligente"
-                // Usamos letras que existen en las palabras para confundir más
-                const alphabet = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
-                const levelChars = allWords.join('') + alphabet; // Mezcla
-                
-                for(let i=0; i<size; i++) {
-                    for(let j=0; j<size; j++) {
-                        if(grid[i][j] === '') {
-                            grid[i][j] = levelChars.charAt(Math.floor(Math.random() * levelChars.length));
-                        }
+                // Relleno aleatorio
+                const chars = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
+                for(let r=0; r<this.size; r++) {
+                    for(let c=0; c<this.size; c++) {
+                        if(grid[r][c] === '') grid[r][c] = chars[Math.floor(Math.random() * chars.length)];
                     }
                 }
-                
                 this.state.grid = grid;
-                this.drawGrid();
+                this.draw();
             }
 
             canPlace(grid, word, r, c, dr, dc) {
-                const len = word.length;
-                // Verificar límites
-                if (r + dr * (len-1) < 0 || r + dr * (len-1) >= this.gridSize) return false;
-                if (c + dc * (len-1) < 0 || c + dc * (len-1) >= this.gridSize) return false;
-
-                // Verificar colisiones
-                for(let i=0; i<len; i++) {
+                if (r + dr * (word.length-1) >= this.size) return false;
+                if (c + dc * (word.length-1) >= this.size) return false;
+                
+                for(let i=0; i<word.length; i++) {
                     const char = grid[r + i*dr][c + i*dc];
                     if(char !== '' && char !== word[i]) return false;
                 }
@@ -350,9 +373,9 @@
                 }
             }
 
-            drawGrid() {
+            draw() {
                 this.dom.grid.innerHTML = '';
-                this.dom.grid.style.gridTemplateColumns = `repeat(${this.gridSize}, 1fr)`;
+                this.dom.grid.style.gridTemplateColumns = `repeat(${this.size}, 1fr)`;
                 
                 this.state.grid.forEach((row, r) => {
                     row.forEach((char, c) => {
@@ -361,16 +384,16 @@
                         cell.textContent = char;
                         cell.dataset.r = r; cell.dataset.c = c;
                         
-                        // Eventos
-                        const start = (e) => { e.preventDefault(); this.startSelect(r, c); };
+                        // Eventos Mouse/Touch
+                        const start = (e) => { e.preventDefault(); this.startSel(r,c); };
                         const move = (e) => { 
-                            e.preventDefault(); 
-                            const touch = e.touches ? e.touches[0] : null;
-                            if(touch) {
-                                const el = document.elementFromPoint(touch.clientX, touch.clientY);
-                                if(el && el.dataset.r) this.moveSelect(parseInt(el.dataset.r), parseInt(el.dataset.c));
+                            e.preventDefault();
+                            const t = e.touches ? e.touches[0] : null;
+                            if(t) {
+                                const el = document.elementFromPoint(t.clientX, t.clientY);
+                                if(el && el.dataset.r) this.moveSel(parseInt(el.dataset.r), parseInt(el.dataset.c));
                             } else {
-                                this.moveSelect(r, c);
+                                this.moveSel(r,c);
                             }
                         };
 
@@ -383,38 +406,27 @@
                     });
                 });
                 
-                const end = () => this.endSelect();
+                const end = () => this.endSel();
                 document.addEventListener('mouseup', end);
                 document.addEventListener('touchend', end);
             }
 
-            renderUI() {
-                this.dom.list.innerHTML = this.levelData.words
-                    .map(w => `<div class="word-tag" id="w-${w}">${w}</div>`)
-                    .join('');
+            renderWords(words) {
+                this.dom.words.innerHTML = words.map(w => `<div class="word-tag" id="tag-${w}">${w}</div>`).join('');
             }
 
-            // --- Lógica Selección ---
-            startSelect(r, c) {
-                this.state.selecting = true;
-                this.startPos = {r,c};
-                this.updateVisuals(r, c);
-            }
-
-            moveSelect(r, c) {
-                if(!this.state.selecting) return;
-                this.updateVisuals(r, c);
-            }
-
-            updateVisuals(endR, endC) {
+            // --- Selección ---
+            startSel(r,c) { this.selecting = true; this.startPos = {r,c}; this.updateSel(r,c); }
+            moveSel(r,c) { if(this.selecting) this.updateSel(r,c); }
+            
+            updateSel(er, ec) {
                 document.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
-                this.currentSelection = [];
-
-                // Lógica de línea recta
-                const dr = endR - this.startPos.r;
-                const dc = endC - this.startPos.c;
+                this.currSel = [];
                 
-                // Validar diagonal perfecta u ortogonal
+                const dr = er - this.startPos.r;
+                const dc = ec - this.startPos.c;
+
+                // Forzar diagonales/rectas perfectas
                 if(dr===0 || dc===0 || Math.abs(dr)===Math.abs(dc)) {
                     const steps = Math.max(Math.abs(dr), Math.abs(dc));
                     const stepR = dr===0 ? 0 : dr/steps;
@@ -423,100 +435,97 @@
                     for(let i=0; i<=steps; i++) {
                         const r = this.startPos.r + i*stepR;
                         const c = this.startPos.c + i*stepC;
-                        const cell = this.dom.grid.children[r * this.gridSize + c];
+                        const idx = r * this.size + c;
+                        const cell = this.dom.grid.children[idx];
                         cell.classList.add('selected');
-                        this.currentSelection.push(cell);
+                        this.currSel.push(cell);
                     }
                 }
             }
 
-            endSelect() {
-                if(!this.state.selecting) return;
-                this.state.selecting = false;
+            endSel() {
+                if(!this.selecting) return;
+                this.selecting = false;
+                if(!this.currSel || !this.currSel.length) return;
                 
-                if(!this.currentSelection || this.currentSelection.length === 0) return;
-
-                const word = this.currentSelection.map(c => c.textContent).join('');
-                const revWord = word.split('').reverse().join('');
+                const word = this.currSel.map(c => c.textContent).join('');
+                const rev = word.split('').reverse().join('');
                 
-                if(!this.checkWord(word)) this.checkWord(revWord);
-                
+                this.check(word) || this.check(rev);
                 document.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
             }
 
-            checkWord(word) {
-                // Palabra normal
-                if(this.levelData.words.includes(word) && !this.state.found.includes(word)) {
+            check(word) {
+                const data = LEVELS[this.state.lvl];
+                // Palabra Normal
+                if(data.words.includes(word) && !this.state.found.includes(word)) {
                     this.state.found.push(word);
-                    document.getElementById(`w-${word}`).classList.add('done');
-                    this.currentSelection.forEach(c => c.classList.add('found'));
+                    document.getElementById(`tag-${word}`).classList.add('done');
+                    this.currSel.forEach(c => c.classList.add('found'));
                     
-                    if(this.state.found.length === this.levelData.words.length) {
-                        setTimeout(() => this.win(), 500);
-                    }
+                    if(this.state.found.length === data.words.length) setTimeout(() => this.win(), 500);
                     return true;
                 }
                 // Secreto
-                if(this.levelData.secret.includes(word)) {
+                if(data.secret.includes(word)) {
                     const id = `ws_${this.state.lvl}_${word}`;
-                    const res = GameCenter.claimSecretWord(id, 50);
-                    this.currentSelection.forEach(c => c.classList.add('secret'));
-                    if(res) alert("✨ ¡Secreto descubierto! +50 Monedas");
+                    if(GameCenter.claimSecretWord(id, 50)) {
+                        alert("✨ ¡Secreto! +50 Monedas");
+                        this.currSel.forEach(c => c.classList.add('secret'));
+                    }
                     return true;
                 }
                 return false;
             }
 
-            // --- Pistas ---
-            askHint() {
-                document.getElementById('hint-modal').style.display = 'flex';
-            }
-
+            // --- SISTEMA DE PISTAS (LÓGICA CORREGIDA) ---
+            askHint() { document.getElementById('hint-modal').style.display = 'flex'; }
+            
             confirmHint() {
                 document.getElementById('hint-modal').style.display = 'none';
                 
-                // Buscar palabra no encontrada
-                const pending = this.levelData.words.find(w => !this.state.found.includes(w));
-                if(!pending) return;
-
-                if(GameCenter.spendCoins(5)) {
-                    // Buscar primera letra
-                    for(let i=0; i<this.gridSize*this.gridSize; i++) {
-                        const cell = this.dom.grid.children[i];
-                        if(cell.textContent === pending[0] && !cell.classList.contains('found')) {
-                            // Validar un poco más (simple)
-                            cell.classList.add('hint');
-                            setTimeout(() => cell.classList.remove('hint'), 1500);
-                            return; 
-                        }
+                const targets = LEVELS[this.state.lvl].words;
+                const pending = targets.find(w => !this.state.found.includes(w));
+                
+                if(pending) {
+                    if(window.GameCenter.spendCoins(5)) {
+                        // USAR EL MAPA DE COORDENADAS GUARDADO
+                        const coords = this.state.coordsMap[pending];
+                        const idx = coords.r * this.size + coords.c;
+                        const cell = this.dom.grid.children[idx];
+                        
+                        cell.classList.add('hint-active');
+                        setTimeout(() => cell.classList.remove('hint-active'), 2000);
+                    } else {
+                        alert("No tienes suficientes monedas.");
                     }
                 } else {
-                    alert("No tienes suficientes monedas.");
+                    alert("¡Ya encontraste todo!");
                 }
             }
 
             win() {
-                const res = GameCenter.completeLevel('wordsearch', this.state.lvl, 50);
-                const msg = document.getElementById('win-msg');
-                msg.innerHTML = `"${this.levelData.msg}"<br><br>` + 
-                    (res.paid ? `<strong>+50 Monedas</strong>` : `(Nivel completado)`);
+                const res = window.GameCenter.completeLevel('wordsearch', this.state.lvl, 50);
+                document.getElementById('win-msg').innerHTML = 
+                    `${LEVELS[this.state.lvl].msg}<br><br>` + 
+                    (res.paid ? `<span style='color:#34d399'>+50 Monedas</span>` : `<span style='color:#94a3b8'>Replay</span>`);
                 document.getElementById('win-modal').style.display = 'flex';
             }
 
-            nextLevel() {
+            next() {
                 this.state.lvl++;
-                localStorage.setItem('ws_level_v2', this.state.lvl);
+                localStorage.setItem('ws_soft_lvl', this.state.lvl);
                 document.getElementById('win-modal').style.display = 'none';
-                this.initLevel();
+                this.init();
             }
 
-            reset() {
-                if(confirm("¿Reiniciar nivel?")) this.initLevel();
-            }
+            reset() { if(confirm("¿Reiniciar?")) this.init(); }
         }
 
-        lucide.createIcons();
-        const game = new WordSearch();
+        window.onload = () => {
+            lucide.createIcons();
+            game = new WordSearch();
+        };
     </script>
 </body>
 </html>
