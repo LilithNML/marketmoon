@@ -4,20 +4,20 @@
     "name": "Cena Romántica",
     "desc": "Yo cocino y lavo los platos. Menú a tu elección.",
     "price": 200,
-    "image": "https://www.somosmamas.com.ar/wp-content/uploads/2019/02/cenas-romanticas-para-el-14-de-febrero-1.jpg"
+    "image": "https://placehold.co/400x300/1e293b/ec4899?text=Cena+Romantica"
   },
   {
     "id": 2,
     "name": "Masaje",
     "desc": "30 minutos de masaje.",
     "price": 100,
-    "image": "https://img77.uenicdn.com/image/upload/v1568030304/category/shutterstock_583890352.jpg"
+    "image": "https://placehold.co/400x300/1e293b/8b5cf6?text=Masaje"
   },
   {
     "id": 3,
     "name": "Noche de Cine",
     "desc": "Palomitas, manta y maratón de tu serie favorita.",
     "price": 150,
-    "image": "https://uploads.vibra.co/1/2022/08/cine-en-casa-p-768x467.jpg"
+    "image": "https://placehold.co/400x300/1e293b/fbbf24?text=Cine+en+Casa"
   }
 ]
