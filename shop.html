@@ -3,24 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tienda de Regalos</title>
+    <title>Tienda</title>
     <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-    <header class="app-header">
-        <div class="brand">
-            <a href="index.html" style="color:white; margin-right:15px;"><i data-lucide="arrow-left"></i></a>
-            Tienda
+    <header class="top-app-bar">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <a href="index.html" style="color:inherit;"><i data-lucide="arrow-left"></i></a>
+            <h1 class="headline">Tienda</h1>
         </div>
-        <div class="wallet-badge">
-            <i data-lucide="coins"></i> <span class="coin-display">...</span>
+        <div class="chip-coin">
+            <i data-lucide="coins" size="16"></i>
+            <span class="coin-display">...</span>
         </div>
     </header>
 
     <main>
-        <h2>Recompensas Disponibles</h2>
-        <div id="shop-grid" class="grid-container">
+        <div id="shop-container" class="grid-layout">
             </div>
     </main>
 
@@ -28,33 +29,58 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             fetch('data/shop.json')
-                .then(r => r.json())
-                .then(items => {
-                    const container = document.getElementById('shop-grid');
-                    items.forEach(item => {
-                        const div = document.createElement('div');
-                        div.className = 'glass-card';
-                        div.innerHTML = `
-                            <img src="${item.image}" alt="${item.name}" class="card-img-top">
-                            <h3>${item.name}</h3>
-                            <p>${item.desc}</p>
-                            <button class="btn-primary" onclick="buyItem(${item.id}, ${item.price}, '${item.name}')">
-                                <span>${item.price}</span> <i data-lucide="coins" size="16"></i> Canjear
-                            </button>
-                        `;
-                        container.appendChild(div);
-                    });
-                    lucide.createIcons();
-                });
+                .then(res => res.json())
+                .then(items => renderShop(items))
+                .catch(err => console.log(err));
         });
 
-        function buyItem(id, price, name) {
-            if(confirm(`¿Canjear "${name}" por ${price} monedas?`)) {
-                if(GameCenter.spendCoins(price, name)) {
-                    alert(`¡Canje exitoso! Tómale captura a esto y envíamelo: \n\nVALE POR: ${name}\nFECHA: ${new Date().toLocaleString()}`);
-                } else {
-                    alert("No tienes suficientes monedas. ¡Juega más!");
-                }
+        function renderShop(items) {
+            const container = document.getElementById('shop-container');
+            container.innerHTML = '';
+            
+            items.forEach(item => {
+                const card = document.createElement('article');
+                card.className = 'md-card';
+                card.innerHTML = `
+                    <img src="${item.image}" alt="${item.name}" class="card-media">
+                    <div class="card-content">
+                        <h3 class="card-title">${item.name}</h3>
+                        <p class="card-text">${item.description || item.desc}</p>
+                        <button class="btn btn-filled" onclick="attemptBuy(${item.id}, ${item.price}, '${item.name}')">
+                            ${item.price} Monedas
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function attemptBuy(id, price, name) {
+            // Confirmación nativa (ligera)
+            if(!confirm(`¿Canjear "${name}" por ${price} monedas?`)) return;
+
+            // Intentar compra
+            const result = GameCenter.spendCoins(price, name);
+
+            if(result.success) {
+                // Generar Email Automático
+                const subject = encodeURIComponent(`Canje de Regalo: ${name}`);
+                const body = encodeURIComponent(
+                    `¡Hola! He canjeado mis monedas del juego.\n\n` +
+                    `REGALO: ${name}\n` +
+                    `CÓDIGO DE SEGURIDAD: ${result.code}\n` +
+                    `FECHA: ${new Date().toLocaleString()}\n\n` +
+                    `Por favor, valida este código.`
+                );
+
+                // Abrir cliente de correo
+                window.location.href = `mailto:?subject=${subject}&body=${body}`;
+                
+                // Feedback visual
+                alert(`¡Canjeado! Código: ${result.code}. Se abrirá tu correo.`);
+            } else {
+                alert("No tienes suficientes monedas. ¡Juega más!");
             }
         }
     </script>
