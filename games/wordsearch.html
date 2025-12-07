@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sopas de Letras del Destino</title>
     
-    <!-- Fuentes Elegantes -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
-    <!-- Iconos Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
@@ -25,8 +23,8 @@
             --highlight: rgba(56, 189, 248, 0.25);
             
             /* Colores de estado */
-            --found-word: #2dd4bf; /* Teal romántico (Normal) */
-            --secret-word: #a855f7; /* Púrpura Místico (Secreto) */
+            --found-word: #2dd4bf; /* Teal romántico */
+            --secret-word: #a855f7; /* Púrpura Místico */
             --secret-glow: rgba(168, 85, 247, 0.6);
 
             --modal-bg: rgba(15, 23, 42, 0.98);
@@ -36,402 +34,104 @@
             --font-body: 'Lato', sans-serif;
         }
 
-        * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
 
         body {
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             background-color: var(--bg-color);
             color: var(--text-primary);
             font-family: var(--font-body);
             overflow-x: hidden;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
 
-        /* --- Fondo Animado (Partículas) --- */
-        .background-fx {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-            pointer-events: none;
+        /* Botón Salir Flotante (Añadido para navegación) */
+        .exit-btn {
+            position: fixed; top: 15px; left: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white; padding: 8px 15px;
+            border-radius: 20px; text-decoration: none;
+            display: flex; align-items: center; gap: 8px;
+            font-size: 14px; backdrop-filter: blur(5px);
+            z-index: 1000; border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .star {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            opacity: 0.3;
-            animation: float 10s infinite ease-in-out;
-        }
+        .background-fx { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; pointer-events: none; }
+        .star { position: absolute; background: white; border-radius: 50%; opacity: 0.3; animation: float 10s infinite ease-in-out; }
+        @keyframes float { 0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; } 50% { transform: translateY(-20px) scale(1.5); opacity: 0.6; } }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
-            50% { transform: translateY(-20px) scale(1.5); opacity: 0.6; }
-        }
+        .game-container { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 1000px; padding: 10px; z-index: 1; transition: opacity 0.5s ease; }
 
-        /* --- Contenedor Principal --- */
-        .game-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%; /* Full width para móviles */
-            max-width: 1000px;
-            padding: 10px; /* Padding reducido */
-            z-index: 1;
-            transition: opacity 0.5s ease;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 15px;
-            position: relative;
-            width: 100%;
-            max-width: 500px; /* Alinear header con el ancho del juego */
-        }
-
-        h1 {
-            font-family: var(--font-title);
-            font-size: clamp(1.5rem, 5vw, 2.2rem); /* Título responsive */
-            margin: 0;
-            background: linear-gradient(to right, var(--text-primary), var(--accent-soft));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
-            font-style: italic;
-        }
-
-        .level-indicator {
-            font-size: 0.8rem;
-            color: var(--accent-soft);
-            letter-spacing: 2px;
-            margin-top: 5px;
-            text-transform: uppercase;
-        }
-
-        .reset-btn-mini {
-            position: absolute;
-            top: 5px;
-            right: 0;
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            opacity: 0.5;
-            transition: opacity 0.3s;
-            padding: 5px;
-        }
+        header { text-align: center; margin-bottom: 15px; position: relative; width: 100%; max-width: 500px; }
+        h1 { font-family: var(--font-title); font-size: clamp(1.5rem, 5vw, 2.2rem); margin: 0; background: linear-gradient(to right, var(--text-primary), var(--accent-soft)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 20px rgba(56, 189, 248, 0.3); font-style: italic; }
+        .level-indicator { font-size: 0.8rem; color: var(--accent-soft); letter-spacing: 2px; margin-top: 5px; text-transform: uppercase; }
+        
+        .reset-btn-mini { position: absolute; top: 5px; right: 0; background: none; border: none; color: var(--text-secondary); cursor: pointer; opacity: 0.5; transition: opacity 0.3s; padding: 5px; }
         .reset-btn-mini:hover { opacity: 1; color: #f43f5e; }
 
-        /* --- Layout del Juego --- */
-        .game-area {
-            display: flex;
-            flex-direction: row;
-            gap: 20px;
-            background: rgba(30, 41, 59, 0.5);
-            padding: 20px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            width: 100%;
-            justify-content: center;
-            align-items: flex-start;
-        }
-
-        /* --- Grid (CORRECCIÓN RESPONSIVE) --- */
-        .grid-container {
-            display: grid;
-            gap: 2px;
-            touch-action: none;
-            padding: 8px;
-            background: var(--bg-color);
-            border-radius: 10px;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-            
-            /* Clave para el ajuste: */
-            width: 100%;
-            max-width: 500px; /* No dejar que se haga gigante */
-            margin: 0 auto;
-        }
-
-        .cell {
-            /* Eliminamos width/height fijos */
-            width: 100%;
-            aspect-ratio: 1 / 1; /* Mantiene la celda cuadrada siempre */
-            
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: 700;
-            
-            /* Fuente dinámica: Mínimo 10px, ideal basado en ancho, máximo 1.2rem */
-            font-size: clamp(0.7rem, 3.5vw, 1.2rem); 
-            
-            color: var(--text-secondary);
-            cursor: pointer;
-            border-radius: 4px;
-            transition: color 0.2s, background 0.2s, transform 0.2s;
-            text-transform: uppercase;
-        }
-
-        .cell.selected {
-            background-color: var(--highlight);
-            color: var(--accent-glow);
-            box-shadow: 0 0 10px var(--highlight);
-            transform: scale(1.05); /* Reducido un poco para evitar overflow visual */
-            z-index: 2;
-        }
-
-        /* Animación estándar */
-        .cell.found {
-            background-color: transparent;
-            color: var(--found-word);
-            text-shadow: 0 0 5px var(--found-word); /* Reducido glow para móvil */
-            animation: pulse-found 1s ease;
-        }
-
-        /* Animación Secreta */
-        .cell.secret-found {
-            color: var(--secret-word);
-            text-shadow: 0 0 8px var(--secret-glow);
-            animation: pulse-secret 1.5s ease infinite alternate;
-        }
-
-        @keyframes pulse-found {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); color: white; }
-            100% { transform: scale(1); }
-        }
-
-        @keyframes pulse-secret {
-            from { text-shadow: 0 0 2px var(--secret-word); }
-            to { text-shadow: 0 0 10px var(--secret-word), 0 0 1px white; }
-        }
-
-        /* --- Sidebar --- */
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            min-width: 200px;
-        }
-
-        .sidebar h2 {
-            font-family: var(--font-title);
-            font-size: 1.4rem;
-            margin-top: 0;
-            margin-bottom: 10px;
-            color: var(--text-primary);
-            border-bottom: 1px solid var(--text-secondary);
-            padding-bottom: 5px;
-        }
-
-        .word-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .word-item {
-            font-size: 0.95rem;
-            color: var(--text-secondary);
-            padding: 6px 10px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 6px;
-            transition: all 0.3s ease;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .word-item.found {
-            color: var(--bg-color);
-            background: var(--found-word);
-            font-weight: bold;
-            box-shadow: 0 0 10px rgba(45, 212, 191, 0.4);
-        }
+        .game-area { display: flex; flex-direction: row; gap: 20px; background: rgba(30, 41, 59, 0.5); padding: 20px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); width: 100%; justify-content: center; align-items: flex-start; }
         
-        .word-item.found::after {
-            content: '✓';
-        }
+        .grid-container { display: grid; gap: 2px; touch-action: none; padding: 8px; background: var(--bg-color); border-radius: 10px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); width: 100%; max-width: 500px; margin: 0 auto; }
+        .cell { width: 100%; aspect-ratio: 1 / 1; display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: clamp(0.7rem, 3.5vw, 1.2rem); color: var(--text-secondary); cursor: pointer; border-radius: 4px; transition: color 0.2s, background 0.2s, transform 0.2s; text-transform: uppercase; }
+        .cell.selected { background-color: var(--highlight); color: var(--accent-glow); box-shadow: 0 0 10px var(--highlight); transform: scale(1.05); z-index: 2; }
+        .cell.found { background-color: transparent; color: var(--found-word); text-shadow: 0 0 5px var(--found-word); animation: pulse-found 1s ease; }
+        .cell.secret-found { color: var(--secret-word); text-shadow: 0 0 8px var(--secret-glow); animation: pulse-secret 1.5s ease infinite alternate; }
 
-        /* --- Secret Counter --- */
-        .secret-counter {
-            margin-top: 15px;
-            padding: 8px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            font-size: 0.85rem;
-            color: var(--secret-word);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            opacity: 0.9;
-        }
+        @keyframes pulse-found { 0% { transform: scale(1); } 50% { transform: scale(1.1); color: white; } 100% { transform: scale(1); } }
+        @keyframes pulse-secret { from { text-shadow: 0 0 2px var(--secret-word); } to { text-shadow: 0 0 10px var(--secret-word), 0 0 1px white; } }
 
-        /* --- Modals --- */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--modal-bg);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.5s ease;
-            z-index: 100;
-            backdrop-filter: blur(5px);
-            padding: 20px;
-        }
+        .sidebar { display: flex; flex-direction: column; min-width: 200px; }
+        .sidebar h2 { font-family: var(--font-title); font-size: 1.4rem; margin-top: 0; margin-bottom: 10px; color: var(--text-primary); border-bottom: 1px solid var(--text-secondary); padding-bottom: 5px; }
+        .word-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+        .word-item { font-size: 0.95rem; color: var(--text-secondary); padding: 6px 10px; background: rgba(255, 255, 255, 0.03); border-radius: 6px; transition: all 0.3s ease; display: flex; justify-content: space-between; align-items: center; }
+        .word-item.found { color: var(--bg-color); background: var(--found-word); font-weight: bold; box-shadow: 0 0 10px rgba(45, 212, 191, 0.4); }
+        .word-item.found::after { content: '✓'; }
 
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: all;
-        }
+        .secret-counter { margin-top: 15px; padding: 8px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; color: var(--secret-word); display: flex; align-items: center; gap: 6px; opacity: 0.9; }
 
-        .modal-content {
-            background: linear-gradient(135deg, #1e293b, #0f172a);
-            border: 1px solid var(--accent-glow);
-            padding: 30px;
-            border-radius: 20px;
-            text-align: center;
-            max-width: 450px;
-            width: 100%;
-            transform: translateY(20px);
-            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 0 50px rgba(56, 189, 248, 0.2);
-            position: relative;
-        }
-
-        /* Estilo especial para modal de secretos */
-        .modal-content.secret-mode {
-            border-color: var(--secret-word);
-            box-shadow: 0 0 50px rgba(168, 85, 247, 0.3);
-        }
-        .modal-content.secret-mode .btn {
-            background: linear-gradient(45deg, var(--secret-word), #7c3aed);
-            box-shadow: 0 5px 15px rgba(124, 58, 237, 0.4);
-        }
-
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; z-index: 100; backdrop-filter: blur(5px); padding: 20px; }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        .modal-content { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid var(--accent-glow); padding: 30px; border-radius: 20px; text-align: center; max-width: 450px; width: 100%; transform: translateY(20px); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 0 50px rgba(56, 189, 248, 0.2); position: relative; }
+        .modal-content.secret-mode { border-color: var(--secret-word); box-shadow: 0 0 50px rgba(168, 85, 247, 0.3); }
+        .modal-content.secret-mode .btn { background: linear-gradient(45deg, var(--secret-word), #7c3aed); box-shadow: 0 5px 15px rgba(124, 58, 237, 0.4); }
         .modal-overlay.active .modal-content { transform: translateY(0); }
 
-        .modal-title {
-            font-family: var(--font-title);
-            font-size: 1.8rem;
-            color: var(--accent-soft);
-            margin-bottom: 15px;
-            font-style: italic;
-        }
+        .modal-title { font-family: var(--font-title); font-size: 1.8rem; color: var(--accent-soft); margin-bottom: 15px; font-style: italic; }
         .modal-content.secret-mode .modal-title { color: #d8b4fe; }
+        .modal-message { font-size: 1.1rem; line-height: 1.6; margin-bottom: 25px; color: var(--text-primary); }
+        .secret-code-box { background: rgba(56, 189, 248, 0.1); border: 1px dashed var(--accent-glow); padding: 10px; margin-bottom: 25px; border-radius: 8px; font-family: monospace; font-size: 1.1rem; letter-spacing: 2px; color: var(--accent-glow); word-break: break-all; }
 
-        .modal-message {
-            font-size: 1.1rem;
-            line-height: 1.6;
-            margin-bottom: 25px;
-            color: var(--text-primary);
-        }
-
-        .secret-code-box {
-            background: rgba(56, 189, 248, 0.1);
-            border: 1px dashed var(--accent-glow);
-            padding: 10px;
-            margin-bottom: 25px;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 1.1rem;
-            letter-spacing: 2px;
-            color: var(--accent-glow);
-            word-break: break-all; /* Evitar desbordamiento de códigos largos */
-        }
-
-        .btn {
-            background: linear-gradient(45deg, var(--accent-glow), #2563eb);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            font-size: 1rem;
-            border-radius: 50px;
-            cursor: pointer;
-            font-family: var(--font-body);
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.4);
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            transition: 0.2s;
-            max-width: 100%; /* Botón seguro */
-            justify-content: center;
-        }
+        .btn { background: linear-gradient(45deg, var(--accent-glow), #2563eb); color: white; border: none; padding: 12px 25px; font-size: 1rem; border-radius: 50px; cursor: pointer; font-family: var(--font-body); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 5px 15px rgba(37, 99, 235, 0.4); display: inline-flex; align-items: center; gap: 10px; transition: 0.2s; max-width: 100%; justify-content: center; }
         .btn:active { transform: scale(0.95); }
 
-        /* --- Final Screen --- */
         #final-screen { display: none; text-align: center; flex-direction: column; align-items: center; animation: fadeIn 2s ease; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- Responsividad CRÍTICA --- */
         @media (max-width: 768px) {
-            .game-area {
-                flex-direction: column-reverse; /* Grid arriba (visualmente en código) o Lista abajo */
-                gap: 15px;
-                padding: 10px;
-                width: 100%;
-            }
-            .sidebar { 
-                width: 100%; 
-                min-width: auto;
-            }
-            .word-list { 
-                flex-direction: row; 
-                flex-wrap: wrap; 
-                justify-content: center; 
-            }
-            .word-item { 
-                font-size: 0.8rem; 
-                padding: 5px 8px; 
-            }
-            
-            /* Ajustes extra finos para pantallas muy pequeñas */
-            .grid-container {
-                gap: 1px; /* Gap mínimo */
-                padding: 5px;
-            }
-            
-            /* Reset button posición en móvil */
-            .reset-btn-mini { 
-                position: absolute;
-                top: 0;
-                right: 0;
-            }
+            .game-area { flex-direction: column-reverse; gap: 15px; padding: 10px; width: 100%; }
+            .sidebar { width: 100%; min-width: auto; }
+            .word-list { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+            .word-item { font-size: 0.8rem; padding: 5px 8px; }
+            .grid-container { gap: 1px; padding: 5px; }
+            .reset-btn-mini { position: absolute; top: 0; right: 0; }
         }
     </style>
 </head>
 <body>
+    <a href="../index.html" class="exit-btn">
+        <i data-lucide="arrow-left" size="16"></i> Salir
+    </a>
 
     <div class="background-fx" id="bg-fx"></div>
 
     <div class="game-container" id="game-container">
         <header>
-            <h1>Sopas de Letras del Destino</h1>
-            <button class="reset-btn-mini" id="reset-all" title="Reiniciar todo el progreso">
+            <h1>Sopas de Letras</h1>
+            <button class="reset-btn-mini" id="reset-all" title="Reiniciar progreso">
                 <i data-lucide="trash-2" size="20"></i>
             </button>
-            <div class="level-indicator" id="level-display">Cargando destino...</div>
+            <div class="level-indicator" id="level-display">Cargando...</div>
         </header>
 
         <div class="game-area">
@@ -443,13 +143,12 @@
                 
                 <div class="secret-counter" id="secret-display" style="display:none">
                     <i data-lucide="sparkles" size="16"></i>
-                    <span id="secret-text">0 Secretos hallados</span>
+                    <span id="secret-text">0 Secretos</span>
                 </div>
             </aside>
         </div>
     </div>
 
-    <!-- Pantalla Final -->
     <div class="game-container" id="final-screen">
         <header>
             <h1 style="font-size: 2.2rem; margin-bottom: 20px;">Destino Completado</h1>
@@ -457,11 +156,10 @@
         <div class="modal-content" style="max-width: 600px;">
             <i data-lucide="heart" size="48" color="#38bdf8" style="margin-bottom: 20px;"></i>
             <p class="modal-message" style="font-size: 1.2rem;">
-                Has desvelado todas las palabras y los secretos ocultos.<br>
-                El destino está escrito en cada letra.
+                Has desvelado todas las palabras y los secretos ocultos.
             </p>
             <div class="secret-code-box" style="font-size: 1.2rem; border-color: #f472b6; color: #f472b6;">
-                CÓDIGO: ETERNO-2025-AMOR
+                AMOR-ETERNO
             </div>
             <button class="btn" onclick="gameInstance.resetProgress()">
                 <i data-lucide="rotate-ccw"></i> Reiniciar Viaje
@@ -469,121 +167,36 @@
         </div>
     </div>
 
-    <!-- Modal Dinámico (Sirve para Nivel Completado y Secreto Encontrado) -->
     <div class="modal-overlay" id="dynamic-modal">
         <div class="modal-content" id="modal-box">
             <div class="modal-title" id="modal-title">Título</div>
             <p class="modal-message" id="modal-msg">Mensaje</p>
-            
-            <!-- Caja de código (solo para nivel completo) -->
             <div class="secret-code-box" id="modal-code-box" style="display:none"></div>
-            
             <button class="btn" id="modal-btn">Continuar</button>
         </div>
     </div>
 
+    <script src="../js/app.js"></script>
+
     <script>
-        // --- Datos de los Niveles (Incluye palabras secretas) ---
         const levels = [
-            {
-                id: 1,
-                words: ["DESTINO", "MIRADA", "TIEMPO", "ALMA"],
-                secretWords: [
-                    { word: "PRIMERO", msg: "El primer paso es siempre el más valiente." },
-                    { word: "HOY", msg: "El ayer es historia, el hoy es un regalo." }
-                ],
-                message: "El tiempo se detiene cuando nuestras miradas se cruzan, revelando lo que el alma ya sabía.",
-                code: "ALMA-01"
-            },
-            {
-                id: 2,
-                words: ["SONRISA", "CALMA", "SUEÑOS", "LUZ"],
-                secretWords: [
-                    { word: "NOCHE", msg: "En la noche es donde más brillan tus sueños." },
-                    { word: "SUAVE", msg: "La suavidad de un instante perfecto." }
-                ],
-                message: "Eres la calma en mi tormenta y la luz que ilumina mis sueños más profundos.",
-                code: "LUZ-02"
-            },
-            {
-                id: 3,
-                words: ["ABRAZO", "REFUGIO", "ETERNO", "PAZ"],
-                secretWords: [
-                    { word: "CASA", msg: "Hogar no es un lugar, es una persona." },
-                    { word: "SOL", msg: "Incluso en invierno, llevas el sol dentro." }
-                ],
-                message: "En tus brazos encontré el refugio que siempre busqué, una paz eterna.",
-                code: "PAZ-03"
-            },
-            {
-                id: 4,
-                words: ["BESOS", "MAGIA", "JUNTOS", "RISA"],
-                secretWords: [
-                    { word: "JUEGO", msg: "El amor es el único juego donde ambos ganan." },
-                    { word: "DOS", msg: "Uno más uno, a veces, es todo el universo." }
-                ],
-                message: "Hay magia en lo simple, como reír juntos sin razón entre besos.",
-                code: "MAGIA-04"
-            },
-            {
-                id: 5,
-                words: ["CAMINO", "HUELLA", "VIBRA", "CIELO"],
-                secretWords: [
-                    { word: "MAPA", msg: "No necesitamos mapa si vamos juntos." },
-                    { word: "AZUL", msg: "El color de la serenidad infinita." }
-                ],
-                message: "Cada paso a tu lado deja una huella imborrable en mi cielo personal.",
-                code: "CIELO-05"
-            },
-            {
-                id: 6,
-                words: ["PROMESA", "LAZO", "VERDAD", "VIDA"],
-                secretWords: [
-                    { word: "SI", msg: "La palabra más corta con el significado más largo." },
-                    { word: "FE", msg: "Creer en lo que no se ve, pero se siente." }
-                ],
-                message: "Más que una promesa, nuestro lazo es la verdad más hermosa de mi vida.",
-                code: "LAZO-06"
-            },
-            {
-                id: 7,
-                words: ["SECRETO", "DESEO", "FUEGO", "PIEL"],
-                secretWords: [
-                    { word: "ROJO", msg: "El color de la pasión que no se apaga." },
-                    { word: "YO", msg: "Perderme en ti para encontrarme a mí." }
-                ],
-                message: "Un secreto a voces: mi piel reconoce tu fuego y mi deseo te pertenece.",
-                code: "FUEGO-07"
-            },
-            {
-                id: 8,
-                words: ["INFINITO", "AMOR", "FINAL", "SIEMPRE"],
-                secretWords: [
-                    { word: "TODO", msg: "Eres mi todo, en la nada del universo." },
-                    { word: "FIN", msg: "Solo es el principio de algo nuevo." }
-                ],
-                message: "No existe final, solo un infinito donde existimos tú y yo para siempre.",
-                code: "ETERNO-08"
-            }
+            { id: 1, words: ["DESTINO", "MIRADA", "TIEMPO", "ALMA"], secretWords: [{ word: "PRIMERO", msg: "El primer paso es siempre el más valiente." }], message: "El tiempo se detiene cuando nuestras miradas se cruzan.", code: "ALMA-01" },
+            { id: 2, words: ["SONRISA", "CALMA", "SUEÑOS", "LUZ"], secretWords: [{ word: "NOCHE", msg: "En la noche es donde más brillan tus sueños." }], message: "Eres la calma en mi tormenta y la luz que ilumina.", code: "LUZ-02" },
+            { id: 3, words: ["ABRAZO", "REFUGIO", "ETERNO", "PAZ"], secretWords: [{ word: "CASA", msg: "Hogar no es un lugar, es una persona." }], message: "En tus brazos encontré el refugio que siempre busqué.", code: "PAZ-03" },
+            { id: 4, words: ["BESOS", "MAGIA", "JUNTOS", "RISA"], secretWords: [{ word: "DOS", msg: "Uno más uno, a veces, es todo el universo." }], message: "Hay magia en lo simple, como reír juntos.", code: "MAGIA-04" },
+            { id: 5, words: ["CAMINO", "HUELLA", "VIBRA", "CIELO"], secretWords: [{ word: "MAPA", msg: "No necesitamos mapa si vamos juntos." }], message: "Cada paso a tu lado deja una huella imborrable.", code: "CIELO-05" }
         ];
 
         class WordSearchGame {
             constructor(levels) {
                 this.levels = levels;
-                // Grid size 13 es seguro en móviles si la CSS es responsive
                 this.gridSize = 13; 
                 this.STORAGE_KEY = 'sopas_destino_save_v1';
                 
-                this.state = {
-                    levelIndex: 0,
-                    foundWords: [], 
-                    foundSecrets: [] 
-                };
-
+                this.state = { levelIndex: 0, foundWords: [], foundSecrets: [] };
                 this.grid = [];
                 this.isSelecting = false;
                 this.selectionStart = null;
-                this.selectionEnd = null;
                 this.selectedCells = [];
                 
                 this.dom = {
@@ -604,47 +217,25 @@
                 };
 
                 this.dom.resetBtn.addEventListener('click', () => {
-                    if(confirm("¿Deseas borrar todo el progreso y reiniciar?")) this.resetProgress();
+                    if(confirm("¿Borrar progreso?")) this.resetProgress();
                 });
                 
                 this.dom.grid.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
-
                 this.loadProgress();
                 this.initLevel();
             }
 
-            // --- LOCAL STORAGE ---
             loadProgress() {
                 const saved = localStorage.getItem(this.STORAGE_KEY);
-                if (saved) {
-                    try {
-                        const parsed = JSON.parse(saved);
-                        this.state = parsed;
-                    } catch (e) {
-                        console.error("Error cargando savegame", e);
-                    }
-                }
+                if (saved) { try { this.state = JSON.parse(saved); } catch (e) {} }
             }
+            saveProgress() { localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.state)); }
+            resetProgress() { localStorage.removeItem(this.STORAGE_KEY); location.reload(); }
 
-            saveProgress() {
-                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.state));
-            }
-
-            resetProgress() {
-                localStorage.removeItem(this.STORAGE_KEY);
-                location.reload();
-            }
-
-            // --- GESTIÓN DE NIVELES ---
             initLevel() {
-                if (this.state.levelIndex >= this.levels.length) {
-                    this.showFinalScreen();
-                    return;
-                }
-
+                if (this.state.levelIndex >= this.levels.length) { this.showFinalScreen(); return; }
                 const currentLevel = this.levels[this.state.levelIndex];
-                
-                this.dom.levelDisplay.textContent = `Capítulo ${this.state.levelIndex + 1} de ${this.levels.length}`;
+                this.dom.levelDisplay.textContent = `Nivel ${this.state.levelIndex + 1}`;
                 this.dom.wordList.innerHTML = '';
                 this.dom.secretDisplay.style.display = 'none'; 
                 this.updateSecretCounter();
@@ -652,11 +243,8 @@
                 currentLevel.words.forEach(word => {
                     const li = document.createElement('li');
                     li.className = 'word-item';
-                    if (this.state.foundWords.includes(word)) {
-                        li.classList.add('found');
-                    }
-                    li.textContent = word;
-                    li.dataset.word = word;
+                    if (this.state.foundWords.includes(word)) li.classList.add('found');
+                    li.textContent = word; li.dataset.word = word;
                     this.dom.wordList.appendChild(li);
                 });
 
@@ -669,145 +257,85 @@
             restoreFoundVisuals() {
                 this.state.foundWords.forEach(word => this.markWordOnGrid(word, 'found'));
                 this.state.foundSecrets.forEach(word => this.markWordOnGrid(word, 'secret-found'));
-                
-                if (this.state.foundSecrets.length > 0) {
-                    this.dom.secretDisplay.style.display = 'flex';
-                }
+                if (this.state.foundSecrets.length > 0) this.dom.secretDisplay.style.display = 'flex';
             }
 
             updateSecretCounter() {
                 const count = this.state.foundSecrets.length;
-                this.dom.secretText.textContent = `${count} Secreto${count !== 1 ? 's' : ''} descubierto${count !== 1 ? 's' : ''}`;
+                this.dom.secretText.textContent = `${count} Secreto${count!==1?'s':''}`;
             }
 
-            // --- MOTOR DEL JUEGO ---
             generateGrid(wordsToPlace) {
                 this.grid = Array(this.gridSize).fill(null).map(() => Array(this.gridSize).fill(''));
-                
-                const directions = [
-                    [0, 1], [1, 0], [1, 1], [-1, 1], 
-                    [0, -1], [-1, 0], [-1, -1], [1, -1]
-                ];
-
+                const directions = [[0, 1], [1, 0], [1, 1], [-1, 1], [0, -1], [-1, 0], [-1, -1], [1, -1]];
                 const sortedWords = [...wordsToPlace].sort((a, b) => b.length - a.length);
 
                 for (let word of sortedWords) {
-                    let placed = false;
-                    let attempts = 0;
+                    let placed = false, attempts = 0;
                     while (!placed && attempts < 200) {
                         const dir = directions[Math.floor(Math.random() * directions.length)];
                         const r = Math.floor(Math.random() * this.gridSize);
                         const c = Math.floor(Math.random() * this.gridSize);
-
-                        if (this.canPlaceWord(word, r, c, dir)) {
-                            this.placeWord(word, r, c, dir);
-                            placed = true;
-                        }
+                        if (this.canPlaceWord(word, r, c, dir)) { this.placeWord(word, r, c, dir); placed = true; }
                         attempts++;
                     }
                 }
-
                 const letters = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
                 for (let r = 0; r < this.gridSize; r++) {
                     for (let c = 0; c < this.gridSize; c++) {
-                        if (this.grid[r][c] === '') {
-                            this.grid[r][c] = letters.charAt(Math.floor(Math.random() * letters.length));
-                        }
+                        if (this.grid[r][c] === '') this.grid[r][c] = letters.charAt(Math.floor(Math.random() * letters.length));
                     }
                 }
             }
 
             canPlaceWord(word, r, c, dir) {
                 let currR = r, currC = c;
-                const endR = r + (dir[0] * (word.length - 1));
-                const endC = c + (dir[1] * (word.length - 1));
-                
+                const endR = r + (dir[0] * (word.length - 1)), endC = c + (dir[1] * (word.length - 1));
                 if (endR < 0 || endR >= this.gridSize || endC < 0 || endC >= this.gridSize) return false;
-
                 for (let i = 0; i < word.length; i++) {
                     const charAtGrid = this.grid[currR][currC];
                     if (charAtGrid !== '' && charAtGrid !== word[i]) return false;
-                    currR += dir[0];
-                    currC += dir[1];
+                    currR += dir[0]; currC += dir[1];
                 }
                 return true;
             }
 
             placeWord(word, r, c, dir) {
                 let currR = r, currC = c;
-                for (let i = 0; i < word.length; i++) {
-                    this.grid[currR][currC] = word[i];
-                    currR += dir[0];
-                    currC += dir[1];
-                }
+                for (let i = 0; i < word.length; i++) { this.grid[currR][currC] = word[i]; currR += dir[0]; currC += dir[1]; }
             }
 
             renderGrid() {
                 this.dom.grid.innerHTML = '';
                 this.dom.grid.style.gridTemplateColumns = `repeat(${this.gridSize}, 1fr)`;
-
                 for (let r = 0; r < this.gridSize; r++) {
                     for (let c = 0; c < this.gridSize; c++) {
                         const cell = document.createElement('div');
-                        cell.className = 'cell';
-                        cell.textContent = this.grid[r][c];
-                        cell.dataset.r = r;
-                        cell.dataset.c = c;
-                        
-                        // Mouse
+                        cell.className = 'cell'; cell.textContent = this.grid[r][c]; cell.dataset.r = r; cell.dataset.c = c;
                         cell.addEventListener('mousedown', (e) => this.startSelection(r, c, e));
                         cell.addEventListener('mouseover', () => this.updateSelection(r, c));
-                        
                         this.dom.grid.appendChild(cell);
                     }
                 }
-
-                // Global MouseUp
                 document.addEventListener('mouseup', () => this.endSelection());
-                
-                // Touch
                 this.dom.grid.addEventListener('touchstart', (e) => this.handleTouchStart(e), {passive: false});
                 this.dom.grid.addEventListener('touchmove', (e) => this.handleTouchMove(e), {passive: false});
                 this.dom.grid.addEventListener('touchend', () => this.endSelection());
             }
 
-            // --- INTERACCIÓN Y SELECCIÓN ---
-            startSelection(r, c, e) {
-                if (e) e.preventDefault();
-                this.isSelecting = true;
-                this.selectionStart = { r, c };
-                this.updateSelection(r, c);
-            }
-
-            handleTouchStart(e) {
-                const touch = e.touches[0];
-                const el = document.elementFromPoint(touch.clientX, touch.clientY);
-                if (el?.classList.contains('cell')) {
-                    this.startSelection(parseInt(el.dataset.r), parseInt(el.dataset.c), e);
-                }
-            }
-
-            handleTouchMove(e) {
-                if (!this.isSelecting) return;
-                const touch = e.touches[0];
-                const el = document.elementFromPoint(touch.clientX, touch.clientY);
-                if (el?.classList.contains('cell')) {
-                    this.updateSelection(parseInt(el.dataset.r), parseInt(el.dataset.c));
-                }
-            }
-
+            startSelection(r, c, e) { if (e) e.preventDefault(); this.isSelecting = true; this.selectionStart = { r, c }; this.updateSelection(r, c); }
+            handleTouchStart(e) { const touch = e.touches[0]; const el = document.elementFromPoint(touch.clientX, touch.clientY); if (el?.classList.contains('cell')) this.startSelection(parseInt(el.dataset.r), parseInt(el.dataset.c), e); }
+            handleTouchMove(e) { if (!this.isSelecting) return; const touch = e.touches[0]; const el = document.elementFromPoint(touch.clientX, touch.clientY); if (el?.classList.contains('cell')) this.updateSelection(parseInt(el.dataset.r), parseInt(el.dataset.c)); }
+            
             updateSelection(r, c) {
                 if (!this.isSelecting) return;
-                this.clearVisualSelection();
-                this.selectionEnd = { r, c };
-                
+                this.clearVisualSelection(); this.selectionEnd = { r, c };
                 const cells = this.getLineCells(this.selectionStart, this.selectionEnd);
                 cells.forEach(pos => {
                     const idx = pos.r * this.gridSize + pos.c;
                     const cell = this.dom.grid.children[idx];
                     if (!cell.classList.contains('found') && !cell.classList.contains('secret-found')) {
-                        cell.classList.add('selected');
-                        this.selectedCells.push(cell);
+                        cell.classList.add('selected'); this.selectedCells.push(cell);
                     }
                 });
             }
@@ -815,62 +343,40 @@
             endSelection() {
                 if (!this.isSelecting) return;
                 this.isSelecting = false;
-                
                 const cells = this.getLineCells(this.selectionStart, this.selectionEnd);
                 const word = cells.map(p => this.grid[p.r][p.c]).join('');
                 const reversed = word.split('').reverse().join('');
-
                 const found = this.checkWord(word, cells) || this.checkWord(reversed, cells);
-                
-                if (!found) this.clearVisualSelection();
-                else this.selectedCells = []; 
+                if (!found) this.clearVisualSelection(); else this.selectedCells = []; 
             }
 
             getLineCells(start, end) {
                 const cells = [];
-                const diffR = end.r - start.r;
-                const diffC = end.c - start.c;
-
+                const diffR = end.r - start.r, diffC = end.c - start.c;
                 if (diffR === 0 || diffC === 0 || Math.abs(diffR) === Math.abs(diffC)) {
                     const steps = Math.max(Math.abs(diffR), Math.abs(diffC));
                     const stepR = diffR === 0 ? 0 : diffR / steps;
                     const stepC = diffC === 0 ? 0 : diffC / steps;
-
-                    for (let i = 0; i <= steps; i++) {
-                        cells.push({ r: start.r + (i * stepR), c: start.c + (i * stepC) });
-                    }
-                } else {
-                    cells.push(start);
-                }
+                    for (let i = 0; i <= steps; i++) cells.push({ r: start.r + (i * stepR), c: start.c + (i * stepC) });
+                } else cells.push(start);
                 return cells;
             }
 
-            clearVisualSelection() {
-                this.selectedCells.forEach(c => c.classList.remove('selected'));
-                this.selectedCells = [];
-            }
-
-            triggerHaptic() {
-                if (navigator.vibrate) {
-                    try { navigator.vibrate(50); } catch(e) {}
-                }
-            }
+            clearVisualSelection() { this.selectedCells.forEach(c => c.classList.remove('selected')); this.selectedCells = []; }
+            triggerHaptic() { if (navigator.vibrate) try { navigator.vibrate(50); } catch(e) {} }
 
             markWordOnGrid(word, className) {
                 const directions = [[0,1], [1,0], [1,1], [-1,1], [0,-1], [-1,0], [-1,-1], [1,-1]];
-                
                 for(let r=0; r<this.gridSize; r++){
                     for(let c=0; c<this.gridSize; c++){
                         if(this.grid[r][c] !== word[0]) continue;
-                        
                         for(let dir of directions){
                             if(this.checkFit(word, r, c, dir)) {
                                 let currR = r, currC = c;
                                 for(let i=0; i<word.length; i++){
                                     const idx = currR * this.gridSize + currC;
                                     this.dom.grid.children[idx].classList.add(className);
-                                    currR += dir[0];
-                                    currC += dir[1];
+                                    currR += dir[0]; currC += dir[1];
                                 }
                                 return;
                             }
@@ -881,70 +387,52 @@
 
             checkFit(word, r, c, dir) {
                 let currR = r, currC = c;
-                const endR = r + (dir[0] * (word.length - 1));
-                const endC = c + (dir[1] * (word.length - 1));
+                const endR = r + (dir[0] * (word.length - 1)), endC = c + (dir[1] * (word.length - 1));
                 if (endR < 0 || endR >= this.gridSize || endC < 0 || endC >= this.gridSize) return false;
-                
                 for(let i=0; i<word.length; i++){
                     if(this.grid[currR][currC] !== word[i]) return false;
-                    currR += dir[0];
-                    currC += dir[1];
+                    currR += dir[0]; currC += dir[1];
                 }
                 return true;
             }
 
             checkWord(word, cellsPos) {
                 const currentLevel = this.levels[this.state.levelIndex];
-                
-                // 1. Verificar palabra NORMAL
                 if (currentLevel.words.includes(word)) {
                     if (!this.state.foundWords.includes(word)) {
                         this.triggerHaptic();
                         this.state.foundWords.push(word);
                         this.saveProgress();
-
                         cellsPos.forEach(pos => {
                             const idx = pos.r * this.gridSize + pos.c;
                             this.dom.grid.children[idx].classList.remove('selected');
                             this.dom.grid.children[idx].classList.add('found');
                         });
-
                         const listItems = this.dom.wordList.querySelectorAll('li');
-                        listItems.forEach(li => {
-                            if (li.dataset.word === word) li.classList.add('found');
-                        });
-
-                        if (this.state.foundWords.length === currentLevel.words.length) {
-                            setTimeout(() => this.levelComplete(), 500);
-                        }
+                        listItems.forEach(li => { if (li.dataset.word === word) li.classList.add('found'); });
+                        if (this.state.foundWords.length === currentLevel.words.length) setTimeout(() => this.levelComplete(), 500);
                         return true;
                     }
                     return true;
                 }
-
-                // 2. Verificar palabra SECRETA
                 const secretObj = currentLevel.secretWords.find(s => s.word === word);
                 if (secretObj) {
                     if (!this.state.foundSecrets.includes(word)) {
                         this.triggerHaptic();
                         this.state.foundSecrets.push(word);
                         this.saveProgress();
-
                         cellsPos.forEach(pos => {
                             const idx = pos.r * this.gridSize + pos.c;
                             this.dom.grid.children[idx].classList.remove('selected');
                             this.dom.grid.children[idx].classList.add('secret-found');
                         });
-
                         this.dom.secretDisplay.style.display = 'flex';
                         this.updateSecretCounter();
-
                         setTimeout(() => this.showSecretModal(secretObj), 300);
                         return true;
                     }
                     return true;
                 }
-
                 return false;
             }
 
@@ -953,21 +441,30 @@
                 this.dom.modalTitle.textContent = "¡Secreto Revelado!";
                 this.dom.modalMsg.innerHTML = `<strong>${secretObj.word}</strong><br><br>${secretObj.msg}`;
                 this.dom.modalCodeBox.style.display = 'none';
-                this.dom.modalBtn.textContent = "Continuar búsqueda";
-                
-                this.dom.modalBtn.onclick = () => {
-                    this.dom.modalOverlay.classList.remove('active');
-                };
-                
+                this.dom.modalBtn.textContent = "Continuar";
+                this.dom.modalBtn.onclick = () => { this.dom.modalOverlay.classList.remove('active'); };
                 this.dom.modalOverlay.classList.add('active');
             }
 
+            // --- FUNCIÓN CLAVE CORREGIDA PARA DAR MONEDAS ---
             levelComplete() {
                 const currentLevel = this.levels[this.state.levelIndex];
                 
                 this.dom.modalBox.classList.remove('secret-mode');
                 this.dom.modalTitle.textContent = "Capítulo Completado";
                 this.dom.modalMsg.textContent = currentLevel.message;
+                
+                // INTEGRACIÓN DE BILLETERA
+                // Verifica si GameCenter (app.js) existe y paga
+                if (window.GameCenter) {
+                    const result = window.GameCenter.completeLevel('wordsearch', this.state.levelIndex, 50);
+                    if (result.paid) {
+                        this.dom.modalMsg.innerHTML += `<br><br><span style="color:#fbbf24; font-weight:bold;">✨ ¡Recompensa: +50 Monedas!</span>`;
+                    } else {
+                        this.dom.modalMsg.innerHTML += `<br><br><span style="color:#94a3b8; font-size:0.9em;">(Nivel completado anteriormente)</span>`;
+                    }
+                }
+
                 this.dom.modalCodeBox.style.display = 'block';
                 this.dom.modalCodeBox.textContent = currentLevel.code;
                 this.dom.modalBtn.textContent = "Siguiente Capítulo";
@@ -980,17 +477,12 @@
 
             nextLevel() {
                 this.dom.modalOverlay.classList.remove('active');
-                
                 this.state.levelIndex++;
                 this.state.foundWords = [];
                 this.state.foundSecrets = []; 
                 this.saveProgress();
-
                 this.dom.gameContainer.style.opacity = '0';
-                setTimeout(() => {
-                    this.initLevel();
-                    this.dom.gameContainer.style.opacity = '1';
-                }, 500);
+                setTimeout(() => { this.initLevel(); this.dom.gameContainer.style.opacity = '1'; }, 500);
             }
 
             showFinalScreen() {
@@ -1006,111 +498,18 @@
                 const star = document.createElement('div');
                 star.className = 'star';
                 const size = Math.random() * 3 + 1;
-                star.style.width = `${size}px`;
-                star.style.height = `${size}px`;
-                star.style.left = `${Math.random() * 100}%`;
-                star.style.top = `${Math.random() * 100}%`;
-                star.style.animationDuration = `${Math.random() * 5 + 5}s`;
-                star.style.animationDelay = `${Math.random() * 5}s`;
+                star.style.width = `${size}px`; star.style.height = `${size}px`;
+                star.style.left = `${Math.random() * 100}%`; star.style.top = `${Math.random() * 100}%`;
+                star.style.animationDuration = `${Math.random() * 5 + 5}s`; star.style.animationDelay = `${Math.random() * 5}s`;
                 container.appendChild(star);
             }
         }
 
         lucide.createIcons();
         createParticles(30);
-        
         let gameInstance;
-        window.addEventListener('DOMContentLoaded', () => {
-            gameInstance = new WordSearchGame(levels);
-        });
+        window.addEventListener('DOMContentLoaded', () => { gameInstance = new WordSearchGame(levels); });
 
-        /* --- INTEGRACIÓN CON LOVE ARCADE --- */
-// Añade esto al final del bloque <script> en games/wordsearch.html
-
-// Modificamos el método levelComplete original para dar monedas
-const originalLevelComplete = WordSearchGame.prototype.levelComplete;
-WordSearchGame.prototype.levelComplete = function() {
-    // Llamar a la función original para que muestre el modal
-    originalLevelComplete.call(this);
-    
-    // Lógica nueva: Dar monedas
-    // Intentamos conectar con el sistema padre o usar localStorage directo
-    const REWARD = 50; 
-    
-    // Método 1: Si se abre desde iframe o tiene acceso al padre
-    // Método 2: Modificar localStorage compartido directamente (más seguro para archivos locales)
-    try {
-        const storeKey = 'gamecenter_v2_core';
-        let store = JSON.parse(localStorage.getItem(storeKey) || '{"coins":0}');
-        store.coins += REWARD;
-        localStorage.setItem(storeKey, JSON.stringify(store));
-        console.log("Monedas añadidas externamente:", REWARD);
-    } catch(e) {
-        console.error("Error guardando monedas", e);
-    }
-};
-
-
-/* --- INTEGRACIÓN SEGURA V3 --- */
-// 1. Botón de Salida Flotante
-const exitBtn = document.createElement('a');
-exitBtn.href = '../index.html';
-exitBtn.innerHTML = '<i data-lucide="home"></i>';
-exitBtn.style.cssText = 'position:fixed; top:15px; left:15px; background:rgba(0,0,0,0.6); color:white; padding:10px; border-radius:50%; z-index:999; display:flex; border:1px solid rgba(255,255,255,0.2);';
-document.body.appendChild(exitBtn);
-if(window.lucide) lucide.createIcons();
-
-// 2. Interceptar victoria para evitar farming
-// Accedemos al prototipo de tu clase WordSearchGame
-if (typeof WordSearchGame !== 'undefined') {
-    const originalLevelComplete = WordSearchGame.prototype.levelComplete;
-    
-    WordSearchGame.prototype.levelComplete = function() {
-        // Ejecutar visuales originales
-        originalLevelComplete.call(this);
-        
-        // Lógica de pago único
-        // Usamos el índice del nivel actual como ID único
-        const currentLvlId = this.state.levelIndex; 
-        const REWARD = 50;
-
-        // Llamar al padre (GameCenter) o gestionar localmente
-        try {
-            // Verificar si tenemos acceso a la lógica central
-            const storeKey = 'gamecenter_v3_core'; // MISMA CLAVE QUE APP.JS
-            let store = JSON.parse(localStorage.getItem(storeKey) || '{"coins":0, "progress":{"wordsearch":[]}}');
-            
-            // Inicializar array si no existe
-            if(!store.progress) store.progress = {};
-            if(!store.progress.wordsearch) store.progress.wordsearch = [];
-
-            // ¿Ya se pagó este nivel?
-            if (!store.progress.wordsearch.includes(currentLvlId)) {
-                // NO se ha pagado: Pagar
-                store.progress.wordsearch.push(currentLvlId);
-                store.coins += REWARD;
-                localStorage.setItem(storeKey, JSON.stringify(store));
-                
-                // Feedback visual discreto
-                showToast(`¡Primera vez! +${REWARD} monedas`);
-            } else {
-                // YA se pagó
-                showToast("Nivel completado (Replay - Sin monedas)");
-            }
-        } catch(e) {
-            console.error("Error conectando con billetera", e);
-        }
-    };
-}
-
-function showToast(msg) {
-    const d = document.createElement('div');
-    d.textContent = msg;
-    d.style.cssText = 'position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#333; color:white; padding:10px 20px; border-radius:20px; z-index:2000; font-family:sans-serif; font-size:14px; box-shadow:0 5px 15px rgba(0,0,0,0.5);';
-    document.body.appendChild(d);
-    setTimeout(() => d.remove(), 3000);
-}
-        
     </script>
 </body>
 </html>
