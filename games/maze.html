@@ -42,15 +42,14 @@
         .btn-glass:active { transform: scale(0.95); background: rgba(255,255,255,0.2); }
         .lvl-badge { background: var(--player); color: #000; font-weight: 800; border:none; }
 
-        /* AREA DE JUEGO (CORREGIDO) */
+        /* AREA DE JUEGO */
         #game-viewport {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1; /* Detrás de la UI */
+            z-index: 1; 
             background: var(--bg-deep);
         }
         canvas {
-            display: block;
-            width: 100%; height: 100%;
+            display: block; width: 100%; height: 100%;
         }
 
         /* TUTORIAL OVERLAY */
@@ -184,10 +183,21 @@
         };
         const MAX_LEVEL = 15;
 
-        // SISTEMA DE AUDIO
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // SISTEMA DE AUDIO (Lazy Init)
+        let audioCtx = null;
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
         function playSound(type) {
-            if(audioCtx.state === 'suspended') audioCtx.resume();
+            if (!audioCtx) return; // Si no se ha iniciado, no suena y no crashea
+            
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain);
@@ -215,20 +225,24 @@
             constructor() {
                 this.canvas = document.getElementById('canvas');
                 this.ctx = this.canvas.getContext('2d');
-                this.state = { lvl: 1, grid: [], p: {x:0,y:0}, g: {x:0,y:0}, active: false };
+                this.state = { lvl: 1, p: {x:0,y:0}, g: {x:0,y:0}, active: false };
+                
+                // Inicializar grid vacío para evitar crash en loop
+                this.grid = []; 
                 
                 // Cámara Virtual
                 this.cam = { x: 0, y: 0, zoom: 1 };
                 this.drawP = { x: 0, y: 0 }; 
-                this.cellSize = 40; // Tamaño base lógico
+                this.cellSize = 40; 
 
                 const saved = localStorage.getItem('maze_pro_v2');
                 if(saved) this.state.lvl = parseInt(saved);
 
                 this.setupInputs();
                 
-                // Forzar resize inicial y comenzar
                 window.addEventListener('resize', () => this.resize());
+                
+                // Iniciar juego
                 this.initLevel();
                 
                 this.loop = this.loop.bind(this);
@@ -239,24 +253,28 @@
                 if(this.state.lvl > MAX_LEVEL) { alert("¡Juego Completado!"); this.state.lvl = 1; }
                 
                 document.getElementById('loading-modal').style.display = 'flex';
+                this.grid = []; // Limpiar grid para detener lógica anterior
                 
                 setTimeout(() => {
                     const cfg = LEVEL_CONFIG[this.state.lvl] || { size: 9 + (this.state.lvl * 2), minSteps: 20 + (this.state.lvl * 8) };
                     document.getElementById('lvl-display').innerText = `NV ${this.state.lvl}`;
                     
-                    // Generación con reintentos
                     let valid = false;
+                    let newGrid = [];
+                    // Generación con reintentos
                     while(!valid) {
-                        this.grid = this.generateMaze(cfg);
-                        const sol = this.solveAStar(this.state.p, this.state.g);
+                        newGrid = this.generateMaze(cfg);
+                        // Validar con una copia temporal del estado
+                        const tempGridObj = { grid: newGrid }; // Simulación
+                        const sol = this.solveAStar(this.state.p, this.state.g, newGrid);
                         if(sol && sol.length >= cfg.minSteps) valid = true;
                     }
-
+                    
+                    this.grid = newGrid; // Asignar grid final
                     this.state.active = true;
                     this.drawP = { ...this.state.p };
                     this.hintPath = null;
                     
-                    // Ajustar cámara inmediatamente
                     this.resize();
                     
                     document.getElementById('loading-modal').style.display = 'none';
@@ -272,7 +290,6 @@
 
                 while(stack.length) {
                     let currIdx = stack.length - 1;
-                    // Randomness para dificultad
                     if(Math.random() > 0.7) currIdx = Math.floor(Math.random() * stack.length);
                     
                     let curr = stack[currIdx];
@@ -290,7 +307,6 @@
                     }
                 }
                 
-                // Loops para niveles avanzados
                 if(cfg.type === 'loops' || this.state.lvl > 8) {
                     for(let i=0; i<size/2; i++) {
                         let rx = Math.floor(Math.random()*(size-2))+1;
@@ -305,18 +321,26 @@
                 return grid;
             }
 
-            solveAStar(start, end) {
-                // Simplified Pathfinding check
+            solveAStar(start, end, gridRef) {
+                // Usar referencia de grid pasada o la actual
+                const grid = gridRef || this.grid;
+                if(!grid || grid.length === 0) return null;
+
                 let q = [{...start, path:[]}];
                 let visited = new Set();
-                while(q.length) {
+                
+                // Límite de seguridad para evitar cuelgues en mapas gigantes
+                let iterations = 0;
+                
+                while(q.length && iterations < 5000) {
+                    iterations++;
                     let curr = q.shift();
                     let key = `${curr.x},${curr.y}`;
                     if(curr.x === end.x && curr.y === end.y) return curr.path;
                     if(visited.has(key)) continue;
                     visited.add(key);
 
-                    const cell = this.grid[curr.y][curr.x];
+                    const cell = grid[curr.y][curr.x];
                     const dirs = [[0,-1,'t'],[1,0,'r'],[0,1,'b'],[-1,0,'l']];
                     for(let d of dirs) {
                         if(!cell.w[d[2]]) {
@@ -334,22 +358,22 @@
                 const uiStick = document.getElementById('joy-stick');
                 let startX, startY, active = false;
 
-                joyZone.addEventListener('touchstart', e => {
-                    e.preventDefault();
+                const handleJoyStart = (clientX, clientY) => {
+                    initAudio(); // Iniciar audio en interacción
                     active = true;
-                    const t = e.touches[0];
-                    startX = t.clientX; startY = t.clientY;
+                    startX = clientX; startY = clientY;
                     uiBase.style.display = 'block';
                     uiBase.style.left = startX + 'px'; uiBase.style.top = startY + 'px';
                     uiStick.style.transform = `translate(-50%, -50%)`;
-                }, {passive:false});
+                };
 
-                joyZone.addEventListener('touchmove', e => {
+                joyZone.addEventListener('touchstart', e => { e.preventDefault(); handleJoyStart(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
+                joyZone.addEventListener('mousedown', e => { handleJoyStart(e.clientX, e.clientY); });
+
+                const handleJoyMove = (clientX, clientY) => {
                     if(!active) return;
-                    e.preventDefault();
-                    const t = e.touches[0];
-                    const dx = t.clientX - startX;
-                    const dy = t.clientY - startY;
+                    const dx = clientX - startX;
+                    const dy = clientY - startY;
                     const dist = Math.min(40, Math.hypot(dx, dy));
                     const ang = Math.atan2(dy, dx);
                     
@@ -359,14 +383,23 @@
                         if(Math.abs(dx) > Math.abs(dy)) this.move(dx>0?1:-1, 0, false);
                         else this.move(0, dy>0?1:-1, false);
                     }
-                }, {passive:false});
+                };
 
-                joyZone.addEventListener('touchend', () => { active = false; uiBase.style.display = 'none'; });
+                joyZone.addEventListener('touchmove', e => { e.preventDefault(); handleJoyMove(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
+                window.addEventListener('mousemove', e => handleJoyMove(e.clientX, e.clientY));
+
+                const endJoy = () => { active = false; uiBase.style.display = 'none'; };
+                joyZone.addEventListener('touchend', endJoy);
+                window.addEventListener('mouseup', endJoy);
 
                 // SWIPE
                 const swipeZone = document.getElementById('zone-swipe');
                 let sx, sy, st;
-                swipeZone.addEventListener('touchstart', e => { sx=e.touches[0].clientX; sy=e.touches[0].clientY; st=Date.now(); }, {passive:true});
+                swipeZone.addEventListener('touchstart', e => { 
+                    initAudio(); 
+                    sx=e.touches[0].clientX; sy=e.touches[0].clientY; st=Date.now(); 
+                }, {passive:true});
+                
                 swipeZone.addEventListener('touchend', e => {
                     const dx = e.changedTouches[0].clientX - sx;
                     const dy = e.changedTouches[0].clientY - sy;
@@ -375,23 +408,27 @@
                     
                     const mx = Math.abs(dx)>Math.abs(dy) ? (dx>0?1:-1) : 0;
                     const my = Math.abs(dx)>Math.abs(dy) ? 0 : (dy>0?1:-1);
-                    this.move(mx, my, dt < 250); // Dash if fast
+                    this.move(mx, my, dt < 250); 
                 });
             }
 
             move(dx, dy, dash) {
-                if(!this.state.active) return;
+                if(!this.state.active || !this.grid.length) return;
                 const now = Date.now();
                 if(!dash && now - this.lastMove < 150) return;
                 this.lastMove = now;
 
                 const performStep = () => {
                     const {x, y} = this.state.p;
+                    // Seguridad: verificar límites
+                    if (!this.grid[y] || !this.grid[y][x]) return false;
+                    
                     const c = this.grid[y][x];
                     if(dy===-1 && c.w.t) return false;
                     if(dx===1 && c.w.r) return false;
                     if(dy===1 && c.w.b) return false;
                     if(dx===-1 && c.w.l) return false;
+                    
                     this.state.p.x += dx; this.state.p.y += dy;
                     playSound('step');
                     if(this.state.p.x === this.state.g.x && this.state.p.y === this.state.g.y) this.win();
@@ -410,6 +447,7 @@
 
             useHint() {
                 if(!this.state.active) return;
+                initAudio();
                 if(window.GameCenter && !window.GameCenter.spendCoins(50)) { alert("Necesitas 50 monedas"); return; }
                 this.hintPath = this.solveAStar(this.state.p, this.state.g);
                 setTimeout(() => this.hintPath = null, 5000);
@@ -434,15 +472,25 @@
 
             resize() {
                 const p = document.getElementById('game-viewport');
+                if(!p) return;
+                
                 this.canvas.width = p.clientWidth;
                 this.canvas.height = p.clientHeight;
                 
-                // Calcular Zoom dinámico para ver ~10 celdas
-                const visibleCells = window.innerWidth < 600 ? 10 : 16;
-                this.cam.zoom = this.canvas.width / (visibleCells * this.cellSize);
+                // Calcular Zoom solo si el grid existe
+                if(this.grid && this.grid.length > 0) {
+                    const visibleCells = window.innerWidth < 600 ? 10 : 16;
+                    this.cam.zoom = this.canvas.width / (visibleCells * this.cellSize);
+                }
             }
 
             loop() {
+                // CRASH FIX: Verificar si grid está listo
+                if (!this.grid || this.grid.length === 0) {
+                    requestAnimationFrame(this.loop);
+                    return;
+                }
+
                 // Interpolación
                 this.drawP.x += (this.state.p.x - this.drawP.x) * 0.3;
                 this.drawP.y += (this.state.p.y - this.drawP.y) * 0.3;
@@ -453,7 +501,6 @@
                 const h = this.canvas.height;
                 const scale = this.cam.zoom || 1;
 
-                // Cámara sigue al jugador
                 const cx = -this.drawP.x * cs * scale + w/2 - (cs*scale)/2;
                 const cy = -this.drawP.y * cs * scale + h/2 - (cs*scale)/2;
 
@@ -464,12 +511,10 @@
                 ctx.translate(cx, cy);
                 ctx.scale(scale, scale);
 
-                // Dibujar Grid
                 ctx.strokeStyle = '#334155';
                 ctx.lineWidth = 3;
                 ctx.lineCap = 'round';
                 
-                // Optimización: Dibujar solo visible (Opcional, aquí dibujamos todo para simplificar)
                 ctx.beginPath();
                 this.grid.forEach(row => row.forEach(c => {
                     let x=c.x*cs, y=c.y*cs;
@@ -480,7 +525,6 @@
                 }));
                 ctx.stroke();
 
-                // Pista
                 if(this.hintPath) {
                     ctx.strokeStyle = 'rgba(251, 191, 36, 0.4)';
                     ctx.lineWidth = 8;
@@ -492,7 +536,6 @@
                     ctx.stroke();
                 }
 
-                // Meta
                 const time = Date.now()/300;
                 const gx = this.state.g.x*cs+cs/2;
                 const gy = this.state.g.y*cs+cs/2;
@@ -503,7 +546,6 @@
                 ctx.fill();
                 ctx.shadowBlur = 0;
 
-                // Jugador
                 ctx.fillStyle = '#38bdf8';
                 ctx.beginPath();
                 ctx.arc(this.drawP.x*cs+cs/2, this.drawP.y*cs+cs/2, cs/3, 0, Math.PI*2);
