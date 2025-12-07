@@ -19,5 +19,19 @@
     "desc": "Palomitas, manta y maratón de tu serie favorita.",
     "price": 150,
     "image": "https://placehold.co/400x300/1e293b/fbbf24?text=Cine+en+Casa"
+  },
+  {
+    "id": 4,
+    "name": "x1 Foto con falda.",
+    "desc": "Una foto usando falda, especialmente para ti.",
+    "price": 500,
+    "image": "https://placehold.co/400x300/1e293b/fbbf24?text=Falda"
+  },
+  {
+    "id": 5,
+    "name": "Comprarte un videojuego.",
+    "desc": "El vídeo juego que tu quieras.",
+    "price": 10050,
+    "image": "https://placehold.co/400x300/1e293b/fbbf24?text=Cine+en+Casa"
   }
 ]
