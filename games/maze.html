@@ -3,229 +3,423 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Maze</title>
+    <title>Laberinto</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root { --bg: #020617; --wall: #ec4899; --player: #06b6d4; --goal: #fbbf24; }
-        body { margin: 0; background: var(--bg); overflow: hidden; font-family: sans-serif; touch-action: none; user-select: none; }
+        :root {
+            --bg-deep: #0f172a;
+            --wall: #334155;
+            --path: #1e293b;
+            --player: #38bdf8; /* Azul cyan suave */
+            --goal: #fbbf24;
+            --ui-bg: rgba(15, 23, 42, 0.8);
+        }
         
-        #game-area { position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
-        canvas { background: rgba(255,255,255,0.03); border-radius: 8px; box-shadow: 0 0 15px var(--wall); max-width: 95vw; max-height: 60vh; }
+        body {
+            margin: 0;
+            background: var(--bg-deep);
+            color: white;
+            font-family: sans-serif;
+            overflow: hidden;
+            touch-action: none; /* Crucial para swipe */
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* --- UI Superior --- */
+        .top-bar {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .btn-ui {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 12px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+        }
+
+        /* --- Área de Juego --- */
+        #game-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        canvas {
+            border-radius: 16px;
+            box-shadow: 0 0 30px rgba(56, 189, 248, 0.1);
+            max-width: 90vw;
+            max-height: 70vh;
+        }
+
+        /* --- Control Toggle --- */
+        .control-switch {
+            position: absolute;
+            bottom: 30px;
+            right: 20px;
+            background: var(--ui-bg);
+            padding: 10px;
+            border-radius: 50px;
+            display: flex;
+            gap: 5px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
         
-        /* UI Overlay */
-        .ui-top { position: absolute; top: 10px; left: 10px; z-index: 10; display: flex; gap: 10px; }
-        .back-btn { background: rgba(255,255,255,0.1); color: white; border: none; padding: 8px 12px; border-radius: 20px; text-decoration: none; display: flex; align-items: center; gap: 5px; font-size: 14px; backdrop-filter: blur(5px); }
+        .switch-opt {
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .switch-opt.active {
+            background: var(--player);
+            color: #0f172a;
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        /* --- D-Pad (Modo Flechas) --- */
+        .d-pad {
+            position: absolute;
+            bottom: 40px;
+            left: 20px;
+            display: grid;
+            grid-template-columns: 50px 50px 50px;
+            grid-template-rows: 50px 50px;
+            gap: 8px;
+            transition: opacity 0.3s;
+        }
+        .d-pad.hidden { opacity: 0; pointer-events: none; }
         
-        /* D-PAD VIRTUAL (MEJORA DE CONTROL) */
-        .d-pad { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: grid; grid-template-columns: 60px 60px 60px; grid-template-rows: 60px 60px; gap: 5px; z-index: 20; }
-        .d-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: white; display: flex; justify-content: center; align-items: center; font-size: 24px; touch-action: manipulation; cursor: pointer; transition: 0.1s; }
+        .d-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         .d-btn:active { background: var(--player); color: black; }
-        /* Grid placement */
         .up { grid-column: 2; grid-row: 1; }
         .left { grid-column: 1; grid-row: 2; }
         .down { grid-column: 2; grid-row: 2; }
         .right { grid-column: 3; grid-row: 2; }
 
-        /* Pantallas */
-        .modal { position: absolute; inset: 0; background: rgba(2,6,23,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 50; text-align: center; color: white; }
-        .hidden { display: none !important; }
-        .big-btn { background: transparent; border: 2px solid var(--wall); color: white; padding: 15px 40px; font-size: 1.2rem; margin-top: 20px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
-        .big-btn:active { background: var(--wall); }
-
-        /* Media Queries para ocultar D-Pad en Desktop si se desea, 
-           pero es útil dejarlo para tablets/laptops touch */
-        @media (min-width: 1024px) {
-            .d-pad { bottom: 40px; opacity: 0.5; } 
-            .d-pad:hover { opacity: 1; }
+        /* --- Modales --- */
+        .modal {
+            position: fixed; inset: 0;
+            background: rgba(15, 23, 42, 0.95);
+            display: none; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 100; text-align: center;
+            padding: 20px;
         }
+        .modal h2 { font-size: 2rem; margin-bottom: 10px; color: var(--player); }
+        .btn-big {
+            background: var(--player); color: #0f172a;
+            padding: 15px 40px; border-radius: 50px;
+            border: none; font-weight: bold; font-size: 1.2rem;
+            margin-top: 20px; cursor: pointer;
+        }
+        
     </style>
 </head>
 <body>
-    <div class="ui-top">
-        <a href="../index.html" class="back-btn"><i data-lucide="arrow-left" size="16"></i> Salir</a>
-        <div class="back-btn" id="lvl-badge">Nivel 1</div>
+
+    <div class="top-bar">
+        <a href="../index.html" class="btn-ui">
+            <i data-lucide="arrow-left" size="18"></i> Salir
+        </a>
+        <div class="btn-ui" id="level-indicator">Nivel 1</div>
     </div>
 
-    <div id="game-area">
+    <div id="game-wrapper">
         <canvas id="canvas"></canvas>
+        
+        <div class="d-pad" id="dpad">
+            <button class="d-btn up" onpointerdown="input(0, -1)"><i data-lucide="chevron-up"></i></button>
+            <button class="d-btn left" onpointerdown="input(-1, 0)"><i data-lucide="chevron-left"></i></button>
+            <button class="d-btn down" onpointerdown="input(0, 1)"><i data-lucide="chevron-down"></i></button>
+            <button class="d-btn right" onpointerdown="input(1, 0)"><i data-lucide="chevron-right"></i></button>
+        </div>
+
+        <div class="control-switch">
+            <div class="switch-opt active" id="mode-arrows" onclick="setMode('arrows')">
+                <i data-lucide="move" size="20"></i>
+            </div>
+            <div class="switch-opt" id="mode-swipe" onclick="setMode('swipe')">
+                <i data-lucide="chevrons-right" size="20"></i>
+            </div>
+        </div>
     </div>
 
-    <div class="d-pad">
-        <button class="d-btn up" onpointerdown="input(0, -1)"><i data-lucide="chevron-up"></i></button>
-        <button class="d-btn left" onpointerdown="input(-1, 0)"><i data-lucide="chevron-left"></i></button>
-        <button class="d-btn down" onpointerdown="input(0, 1)"><i data-lucide="chevron-down"></i></button>
-        <button class="d-btn right" onpointerdown="input(1, 0)"><i data-lucide="chevron-right"></i></button>
-    </div>
-
-    <div id="start-screen" class="modal">
-        <h1 style="color:var(--wall); text-shadow:0 0 10px var(--wall); font-size:3rem;">NEON MAZE</h1>
-        <p>Usa las flechas o el teclado</p>
-        <button class="big-btn" onclick="game.start()">JUGAR</button>
-    </div>
-
-    <div id="win-modal" class="modal hidden">
-        <h2 style="color:var(--goal)">¡NIVEL COMPLETADO!</h2>
-        <p id="reward-msg"></p>
-        <button class="big-btn" onclick="game.next()">Siguiente</button>
+    <div id="win-modal" class="modal">
+        <i data-lucide="award" size="64" color="#fbbf24" style="margin-bottom:20px"></i>
+        <h2>¡Excelente!</h2>
+        <p id="win-msg" style="color:#cbd5e1; max-width:300px;">Nivel completado.</p>
+        <button class="btn-big" onclick="game.nextLevel()">Siguiente</button>
     </div>
 
     <script src="../js/app.js"></script>
     <script>
-        class MazeGame {
+        // Configuración Global
+        let controlMode = 'arrows'; // 'arrows' | 'swipe'
+
+        function setMode(mode) {
+            controlMode = mode;
+            document.getElementById('mode-arrows').classList.toggle('active', mode === 'arrows');
+            document.getElementById('mode-swipe').classList.toggle('active', mode === 'swipe');
+            
+            // Ocultar D-Pad si es swipe
+            const dpad = document.getElementById('dpad');
+            if(mode === 'swipe') dpad.classList.add('hidden');
+            else dpad.classList.remove('hidden');
+        }
+
+        class Maze {
             constructor() {
-                this.levels = [5, 7, 9, 11, 15, 19, 21, 25]; // Grid sizes
-                this.state = { lvl: 0, grid: [], p: {x:0, y:0}, g: {x:0, y:0}, active: false };
+                this.levels = [5, 7, 9, 11, 13, 15]; // Tamaños
+                this.state = { lvl: 0, grid: [], p: {x:0, y:0}, drawP: {x:0, y:0}, goal: {x:0,y:0}, active:false };
                 this.canvas = document.getElementById('canvas');
                 this.ctx = this.canvas.getContext('2d');
                 
-                // Recuperar progreso
-                const saved = localStorage.getItem('maze_lvl');
+                const saved = localStorage.getItem('mz_lvl_v2');
                 if(saved) this.state.lvl = parseInt(saved);
 
-                window.addEventListener('resize', () => this.draw());
-                window.addEventListener('keydown', (e) => this.handleKey(e));
-                
-                document.getElementById('lvl-badge').innerText = `Nivel ${this.state.lvl + 1}`;
-            }
-
-            start() {
-                document.getElementById('start-screen').classList.add('hidden');
                 this.initLevel();
+                this.setupInputs();
+                
+                // Game Loop para animaciones suaves
+                this.loop = this.loop.bind(this);
+                requestAnimationFrame(this.loop);
             }
 
             initLevel() {
                 const size = this.levels[this.state.lvl % this.levels.length];
-                this.state.grid = this.generate(size, size);
-                this.state.p = {x:0, y:0};
-                this.state.g = {x:size-1, y:size-1};
-                this.state.active = true;
-                
-                document.getElementById('lvl-badge').innerText = `Nivel ${this.state.lvl + 1}`;
+                this.generate(size);
+                document.getElementById('level-indicator').textContent = `Nivel ${this.state.lvl+1}`;
                 this.resize();
             }
 
-            // Algoritmo DFS Backtracker
-            generate(cols, rows) {
-                let maze = Array(rows).fill().map((_,y) => Array(cols).fill().map((_,x) => ({x,y, walls:{t:1,r:1,b:1,l:1}, vis:false})));
-                let stack = [maze[0][0]];
-                maze[0][0].vis = true;
+            generate(size) {
+                // Generador DFS
+                let grid = Array(size).fill().map((_,y) => Array(size).fill().map((_,x) => ({x,y, w:{t:1,r:1,b:1,l:1}, v:false})));
+                let stack = [grid[0][0]];
+                grid[0][0].v = true;
                 
                 while(stack.length) {
                     let curr = stack.pop();
                     let n = [[0,-1,'t','b'],[1,0,'r','l'],[0,1,'b','t'],[-1,0,'l','r']]
                         .map(d => ({x:curr.x+d[0], y:curr.y+d[1], w1:d[2], w2:d[3]}))
-                        .filter(p => p.x>=0 && p.x<cols && p.y>=0 && p.y<rows && !maze[p.y][p.x].vis);
+                        .filter(p => p.x>=0 && p.x<size && p.y>=0 && p.y<size && !grid[p.y][p.x].v);
                     
                     if(n.length) {
                         stack.push(curr);
                         let nextP = n[Math.floor(Math.random()*n.length)];
-                        let next = maze[nextP.y][nextP.x];
-                        curr.walls[nextP.w1] = 0;
-                        next.walls[nextP.w2] = 0;
-                        next.vis = true;
+                        let next = grid[nextP.y][nextP.x];
+                        curr.w[nextP.w1] = 0; next.w[nextP.w2] = 0; next.v = true;
                         stack.push(next);
                     }
                 }
-                return maze;
+                this.state.grid = grid;
+                this.state.p = {x:0, y:0};
+                this.state.drawP = {x:0, y:0}; // Posición visual para interpolación
+                this.state.goal = {x:size-1, y:size-1};
+                this.state.active = true;
             }
 
             resize() {
-                const s = Math.min(window.innerWidth, window.innerHeight*0.6) - 20;
-                const cols = this.state.grid[0].length;
-                this.cellSize = Math.floor(s / cols);
+                const size = Math.min(window.innerWidth, window.innerHeight * 0.75) - 40;
+                const cols = this.state.grid.length;
+                this.cellSize = Math.floor(size / cols);
                 this.canvas.width = this.cellSize * cols;
-                this.canvas.height = this.canvas.width;
-                this.draw();
+                this.canvas.height = this.cellSize * cols;
+                this.draw(); // Redibujado inicial
+            }
+
+            // --- Lógica de Movimiento ---
+            move(dx, dy) {
+                if(!this.state.active) return;
+
+                if(controlMode === 'arrows') {
+                    // Mover 1 casilla
+                    this.step(dx, dy);
+                } else {
+                    // Modo Swipe: Deslizar hasta pared (Dash)
+                    let moving = true;
+                    let steps = 0;
+                    // Limite de seguridad para evitar bucles infinitos
+                    while(moving && steps < 50) {
+                        if(!this.step(dx, dy)) moving = false;
+                        else {
+                             // Si llegamos a la meta, parar
+                             if(this.state.p.x === this.state.goal.x && this.state.p.y === this.state.goal.y) moving = false;
+                        }
+                        steps++;
+                    }
+                }
+            }
+
+            step(dx, dy) {
+                const {x, y} = this.state.p;
+                const cell = this.state.grid[y][x];
+                
+                // Verificar paredes
+                if(dy === -1 && cell.w.t) return false;
+                if(dx === 1 && cell.w.r) return false;
+                if(dy === 1 && cell.w.b) return false;
+                if(dx === -1 && cell.w.l) return false;
+
+                // Mover lógica
+                this.state.p.x += dx;
+                this.state.p.y += dy;
+                
+                if(this.state.p.x === this.state.goal.x && this.state.p.y === this.state.goal.y) {
+                    this.win();
+                }
+                return true;
+            }
+
+            // --- Animación Suave (Loop) ---
+            loop() {
+                // Interpolación Lineal (Lerp) para suavizar movimiento
+                const speed = 0.2; // 20% de la distancia por frame
+                const targetX = this.state.p.x * this.cellSize;
+                const targetY = this.state.p.y * this.cellSize;
+                
+                // Actualizar posición de dibujo
+                const currentX = this.state.drawP.x * this.cellSize;
+                const currentY = this.state.drawP.y * this.cellSize;
+
+                // Si hay distancia notable, mover y redibujar
+                if(Math.abs(targetX - currentX) > 0.5 || Math.abs(targetY - currentY) > 0.5) {
+                    this.state.drawP.x += (this.state.p.x - this.state.drawP.x) * speed;
+                    this.state.drawP.y += (this.state.p.y - this.state.drawP.y) * speed;
+                    this.draw();
+                }
+
+                requestAnimationFrame(this.loop);
             }
 
             draw() {
-                if(!this.state.active) return;
-                const cs = this.cellSize;
                 const ctx = this.ctx;
-                
-                // Clear
-                ctx.fillStyle = '#020617';
+                const cs = this.cellSize;
+                const grid = this.state.grid;
+
+                // Fondo
+                ctx.fillStyle = '#0f172a';
                 ctx.fillRect(0,0, this.canvas.width, this.canvas.height);
 
-                // Walls
-                ctx.strokeStyle = '#ec4899';
-                ctx.lineWidth = 2;
+                // Caminos (Estilo Moderno: Paredes gruesas redondeadas)
                 ctx.lineCap = 'round';
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = '#ec4899';
-                
+                ctx.lineWidth = Math.max(2, cs * 0.15); // Paredes proporcionales
+                ctx.strokeStyle = '#334155';
+
                 ctx.beginPath();
-                this.state.grid.forEach(row => row.forEach(c => {
-                    let x=c.x*cs, y=c.y*cs;
-                    if(c.walls.t) {ctx.moveTo(x,y); ctx.lineTo(x+cs,y);}
-                    if(c.walls.r) {ctx.moveTo(x+cs,y); ctx.lineTo(x+cs,y+cs);}
-                    if(c.walls.b) {ctx.moveTo(x,y+cs); ctx.lineTo(x+cs,y+cs);}
-                    if(c.walls.l) {ctx.moveTo(x,y+cs); ctx.lineTo(x,y);}
-                }));
+                for(let row of grid) {
+                    for(let c of row) {
+                        let x = c.x * cs, y = c.y * cs;
+                        // Dibujar solo paredes existentes
+                        if(c.w.t) { ctx.moveTo(x,y); ctx.lineTo(x+cs,y); }
+                        if(c.w.l) { ctx.moveTo(x,y); ctx.lineTo(x,y+cs); }
+                        // Bordes derechos e inferiores solo en última celda para eficiencia
+                        if(c.x === grid.length-1 && c.w.r) { ctx.moveTo(x+cs,y); ctx.lineTo(x+cs,y+cs); }
+                        if(c.y === grid.length-1 && c.w.b) { ctx.moveTo(x,y+cs); ctx.lineTo(x+cs,y+cs); }
+                    }
+                }
                 ctx.stroke();
 
-                // Goal
-                ctx.shadowColor = '#fbbf24';
+                // Meta
+                const g = this.state.goal;
                 ctx.fillStyle = '#fbbf24';
-                ctx.fillRect(this.state.g.x*cs+cs*0.25, this.state.g.y*cs+cs*0.25, cs*0.5, cs*0.5);
-
-                // Player
-                ctx.shadowColor = '#06b6d4';
-                ctx.fillStyle = '#06b6d4';
                 ctx.beginPath();
-                ctx.arc(this.state.p.x*cs+cs*0.5, this.state.p.y*cs+cs*0.5, cs*0.3, 0, Math.PI*2);
+                ctx.roundRect(g.x*cs + cs*0.2, g.y*cs + cs*0.2, cs*0.6, cs*0.6, 8);
                 ctx.fill();
+
+                // Jugador (Usando posición interpolada)
+                const p = this.state.drawP;
+                ctx.shadowColor = '#38bdf8';
+                ctx.shadowBlur = 15;
+                ctx.fillStyle = '#38bdf8';
+                ctx.beginPath();
+                ctx.arc(p.x*cs + cs*0.5, p.y*cs + cs*0.5, cs*0.3, 0, Math.PI*2);
+                ctx.fill();
+                ctx.shadowBlur = 0; // Reset
             }
 
-            move(dx, dy) {
-                if(!this.state.active) return;
-                const c = this.state.grid[this.state.p.y][this.state.p.x];
-                let moved = false;
-                
-                if(dy === -1 && !c.walls.t) { this.state.p.y--; moved = true; }
-                else if(dx === 1 && !c.walls.r) { this.state.p.x++; moved = true; }
-                else if(dy === 1 && !c.walls.b) { this.state.p.y++; moved = true; }
-                else if(dx === -1 && !c.walls.l) { this.state.p.x--; moved = true; }
+            setupInputs() {
+                // Swipe
+                let tsX = 0, tsY = 0;
+                this.canvas.addEventListener('touchstart', e => {
+                    tsx = e.touches[0].clientX;
+                    tsy = e.touches[0].clientY;
+                }, {passive: false});
 
-                if(moved) {
-                    this.draw();
-                    if(this.state.p.x === this.state.g.x && this.state.p.y === this.state.g.y) this.win();
-                }
+                this.canvas.addEventListener('touchend', e => {
+                    const dx = e.changedTouches[0].clientX - tsx;
+                    const dy = e.changedTouches[0].clientY - tsy;
+                    
+                    if(Math.abs(dx) > 30 || Math.abs(dy) > 30) {
+                        if(Math.abs(dx) > Math.abs(dy)) this.move(dx>0?1:-1, 0);
+                        else this.move(0, dy>0?1:-1);
+                    }
+                });
+
+                // Teclado (Siempre funciona como flechas)
+                window.addEventListener('keydown', e => {
+                    if(e.key === 'ArrowUp') this.step(0,-1);
+                    if(e.key === 'ArrowDown') this.step(0,1);
+                    if(e.key === 'ArrowLeft') this.step(-1,0);
+                    if(e.key === 'ArrowRight') this.step(1,0);
+                });
             }
 
             win() {
                 this.state.active = false;
                 const res = GameCenter.completeLevel('maze', this.state.lvl, 30);
-                
-                document.getElementById('reward-msg').innerHTML = res.paid 
-                    ? `<span style='color:#10b981'>+30 Monedas</span>` 
-                    : `<span style='color:#94a3b8'>Replay (Sin monedas)</span>`;
-                
-                document.getElementById('win-modal').classList.remove('hidden');
+                const msg = document.getElementById('win-msg');
+                msg.innerHTML = res.paid ? "<strong>+30 Monedas</strong>" : "Nivel completado (Replay)";
+                document.getElementById('win-modal').style.display = 'flex';
             }
 
-            next() {
+            nextLevel() {
                 this.state.lvl++;
-                localStorage.setItem('maze_lvl', this.state.lvl);
-                document.getElementById('win-modal').classList.add('hidden');
+                localStorage.setItem('mz_lvl_v2', this.state.lvl);
+                document.getElementById('win-modal').style.display = 'none';
                 this.initLevel();
             }
-
-            handleKey(e) {
-                if(e.key === 'ArrowUp') this.move(0, -1);
-                if(e.key === 'ArrowRight') this.move(1, 0);
-                if(e.key === 'ArrowDown') this.move(0, 1);
-                if(e.key === 'ArrowLeft') this.move(-1, 0);
-            }
         }
 
-        lucide.createIcons();
-        const game = new MazeGame();
+        // Bridge para botones HTML
+        let game;
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            game = new Maze();
+            window.input = (dx, dy) => game.move(dx, dy);
+        });
+        
+        window.addEventListener('resize', () => game?.resize());
 
-        // Función global para el D-Pad
-        function input(dx, dy) {
-            game.move(dx, dy);
-        }
     </script>
 </body>
 </html>
