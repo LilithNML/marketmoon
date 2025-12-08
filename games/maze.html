@@ -86,18 +86,29 @@
             box-shadow: 0 0 10px var(--player);
         }
 
-        /* BOTÓN PISTA */
+        /* BOTÓN PISTA (MODIFICADO PARA MOSTRAR PRECIO) */
         .hint-fab {
             position: absolute; bottom: 30px; right: 30px;
-            width: 60px; height: 60px; border-radius: 50%;
+            width: 64px; height: 64px; border-radius: 50%;
             background: #f59e0b; color: #000;
-            display: flex; align-items: center; justify-content: center;
+            display: flex; flex-direction: column; /* Stack vertical */
+            align-items: center; justify-content: center;
             box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
             cursor: pointer; z-index: 30; pointer-events: auto;
-            border: 2px solid #fff; font-weight: bold;
+            border: 2px solid #fff; 
             transition: 0.2s;
+            gap: 2px;
         }
         .hint-fab:active { transform: scale(0.9); }
+        
+        .hint-price {
+            font-size: 10px;
+            font-weight: 800;
+            background: rgba(0,0,0,0.2);
+            padding: 1px 5px;
+            border-radius: 4px;
+            color: #fff;
+        }
 
         /* MODALES */
         .modal-overlay {
@@ -151,7 +162,8 @@
     </div>
 
     <div class="hint-fab" onclick="game.useHint()">
-        <i data-lucide="lightbulb" size="28"></i>
+        <i data-lucide="lightbulb" size="24"></i>
+        <div class="hint-price">-50</div>
     </div>
 
     <div id="win-modal" class="modal-overlay">
@@ -196,7 +208,7 @@
         }
 
         function playSound(type) {
-            if (!audioCtx) return; // Si no se ha iniciado, no suena y no crashea
+            if (!audioCtx) return;
             
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
@@ -227,10 +239,7 @@
                 this.ctx = this.canvas.getContext('2d');
                 this.state = { lvl: 1, p: {x:0,y:0}, g: {x:0,y:0}, active: false };
                 
-                // Inicializar grid vacío para evitar crash en loop
                 this.grid = []; 
-                
-                // Cámara Virtual
                 this.cam = { x: 0, y: 0, zoom: 1 };
                 this.drawP = { x: 0, y: 0 }; 
                 this.cellSize = 40; 
@@ -239,10 +248,8 @@
                 if(saved) this.state.lvl = parseInt(saved);
 
                 this.setupInputs();
-                
                 window.addEventListener('resize', () => this.resize());
                 
-                // Iniciar juego
                 this.initLevel();
                 
                 this.loop = this.loop.bind(this);
@@ -253,7 +260,7 @@
                 if(this.state.lvl > MAX_LEVEL) { alert("¡Juego Completado!"); this.state.lvl = 1; }
                 
                 document.getElementById('loading-modal').style.display = 'flex';
-                this.grid = []; // Limpiar grid para detener lógica anterior
+                this.grid = []; 
                 
                 setTimeout(() => {
                     const cfg = LEVEL_CONFIG[this.state.lvl] || { size: 9 + (this.state.lvl * 2), minSteps: 20 + (this.state.lvl * 8) };
@@ -261,16 +268,13 @@
                     
                     let valid = false;
                     let newGrid = [];
-                    // Generación con reintentos
                     while(!valid) {
                         newGrid = this.generateMaze(cfg);
-                        // Validar con una copia temporal del estado
-                        const tempGridObj = { grid: newGrid }; // Simulación
                         const sol = this.solveAStar(this.state.p, this.state.g, newGrid);
                         if(sol && sol.length >= cfg.minSteps) valid = true;
                     }
                     
-                    this.grid = newGrid; // Asignar grid final
+                    this.grid = newGrid; 
                     this.state.active = true;
                     this.drawP = { ...this.state.p };
                     this.hintPath = null;
@@ -322,14 +326,11 @@
             }
 
             solveAStar(start, end, gridRef) {
-                // Usar referencia de grid pasada o la actual
                 const grid = gridRef || this.grid;
                 if(!grid || grid.length === 0) return null;
 
                 let q = [{...start, path:[]}];
                 let visited = new Set();
-                
-                // Límite de seguridad para evitar cuelgues en mapas gigantes
                 let iterations = 0;
                 
                 while(q.length && iterations < 5000) {
@@ -359,7 +360,7 @@
                 let startX, startY, active = false;
 
                 const handleJoyStart = (clientX, clientY) => {
-                    initAudio(); // Iniciar audio en interacción
+                    initAudio(); 
                     active = true;
                     startX = clientX; startY = clientY;
                     uiBase.style.display = 'block';
@@ -420,7 +421,6 @@
 
                 const performStep = () => {
                     const {x, y} = this.state.p;
-                    // Seguridad: verificar límites
                     if (!this.grid[y] || !this.grid[y][x]) return false;
                     
                     const c = this.grid[y][x];
@@ -456,9 +456,16 @@
             win() {
                 this.state.active = false;
                 playSound('win');
+                
+                // CALCULO DINÁMICO DE RECOMPENSA
+                // Base 50 + 10 por cada nivel extra
+                const reward = 50 + ((this.state.lvl - 1) * 10);
+
                 if(window.GameCenter) {
-                    const r = window.GameCenter.completeLevel('maze', this.state.lvl, 50);
-                    document.getElementById('win-msg').innerHTML = r.paid ? "+50 Monedas" : "Nivel Completado";
+                    const r = window.GameCenter.completeLevel('maze', this.state.lvl, reward);
+                    document.getElementById('win-msg').innerHTML = r.paid 
+                        ? `<strong style="color:#10b981">+${reward} Monedas</strong>` 
+                        : "Nivel Completado";
                 }
                 document.getElementById('win-modal').style.display = 'flex';
             }
@@ -473,11 +480,8 @@
             resize() {
                 const p = document.getElementById('game-viewport');
                 if(!p) return;
-                
                 this.canvas.width = p.clientWidth;
                 this.canvas.height = p.clientHeight;
-                
-                // Calcular Zoom solo si el grid existe
                 if(this.grid && this.grid.length > 0) {
                     const visibleCells = window.innerWidth < 600 ? 10 : 16;
                     this.cam.zoom = this.canvas.width / (visibleCells * this.cellSize);
@@ -485,7 +489,6 @@
             }
 
             loop() {
-                // CRASH FIX: Verificar si grid está listo
                 if (!this.grid || this.grid.length === 0) {
                     requestAnimationFrame(this.loop);
                     return;
